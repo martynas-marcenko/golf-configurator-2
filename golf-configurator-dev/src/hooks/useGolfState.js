@@ -6,6 +6,9 @@ import { MockShaftService } from '../services/MockShaftService.js';
 import { PriceFormatter } from '../utils/formatters.js';
 
 // Detect development environment
+// Data source configuration - set to true to use real Shopify data locally
+const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
+
 const isDevelopment = import.meta.env.DEV;
 
 /**
@@ -28,9 +31,10 @@ export const selectedShafts = signal({});
 export const isLoading = signal(false);
 export const error = signal(null);
 
-// Service instances - use mocks in development
-export const productService = isDevelopment ? new MockProductService() : new ProductService();
-export const shaftService = isDevelopment ? new MockShaftService() : new ShaftService();
+// Service instances - use real data if USE_REAL_DATA is true OR in production
+const useRealData = USE_REAL_DATA || !isDevelopment;
+export const productService = useRealData ? new ProductService() : new MockProductService();
+export const shaftService = useRealData ? new ShaftService() : new MockShaftService();
 export const priceFormatter = new PriceFormatter();
 
 // Available options

@@ -164,6 +164,18 @@ export const shaftService = isDevelopment ? new MockShaftService() : new ShaftSe
 - Cart Transformer: `golf-configurator/extensions/cart-transformer/`
 - Built Assets: Auto-generated from `golf-configurator-dev/` build process
 
+## Additional Context Documentation
+
+For detailed business logic, technical specifications, and domain knowledge, refer to the **`context/` directory**:
+
+- **`context/BUSINESS-LOGIC.md`** - Complete UI behavior, validation rules, and user interaction flows
+- **`context/CART-TRANSFORM.md`** - Technical specification for cart transformation function implementation  
+- **`context/DATA-REQUIREMENTS.md`** - Data structures, API requirements, and state management patterns
+- **`context/MCP.md`** - Model Context Protocol configuration and Shopify documentation resources
+- **`context/TRANSCRIPT.md`** - Historical development notes and implementation decisions
+
+These files contain essential domain knowledge for understanding the golf configurator's business requirements and technical constraints.
+
 ## Git Workflow Rules
 
 **IMPORTANT**: Claude must NEVER commit changes automatically. Only commit when explicitly requested via the `/commit` command.
