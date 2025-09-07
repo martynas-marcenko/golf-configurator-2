@@ -92,7 +92,7 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     console.log('Bundle title:', title);
 
     return {
-      merge: {
+      linesMerge: {
         cartLines: group.map((line) => ({
           cartLineId: line.id,
           quantity: line.quantity,
