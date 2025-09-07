@@ -6,9 +6,6 @@ import { MockShaftService } from '../services/MockShaftService.js';
 import { PriceFormatter } from '../utils/formatters.js';
 
 // Detect development environment
-// Data source configuration - set to true to use real Shopify data locally
-const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
-
 const isDevelopment = import.meta.env.DEV;
 
 /**
@@ -19,22 +16,19 @@ const isDevelopment = import.meta.env.DEV;
 // Core state signals
 export const selectedHand = signal(null);
 export const selectedClubs = signal([
-  { id: '4', name: '4-Iron', type: 'iron', isRequired: false, isOptional: true },
-  { id: '5', name: '5-Iron', type: 'iron', isRequired: false, isOptional: true },
   { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '9', name: '9-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
-]); // Start with all clubs pre-selected
+]); // Start with only required clubs (6-PW) pre-selected
 export const selectedShafts = signal({});
 export const isLoading = signal(false);
 export const error = signal(null);
 
-// Service instances - use real data if USE_REAL_DATA is true OR in production
-const useRealData = USE_REAL_DATA || !isDevelopment;
-export const productService = useRealData ? new ProductService() : new MockProductService();
-export const shaftService = useRealData ? new ShaftService() : new MockShaftService();
+// Service instances - use mocks in development
+export const productService = isDevelopment ? new MockProductService() : new ProductService();
+export const shaftService = isDevelopment ? new MockShaftService() : new ShaftService();
 export const priceFormatter = new PriceFormatter();
 
 // Available options

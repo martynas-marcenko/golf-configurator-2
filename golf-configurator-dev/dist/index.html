@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golf Configurator - Development</title>
+    <title>Golf Club Configurator</title>
     <style>
         body {
             margin: 0;
@@ -15,32 +15,18 @@
             justify-content: center;
         }
         
-        .dev-notice {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #3b82f6;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            z-index: 1000;
-        }
-        
         #golf-configurator {
             width: 100%;
             max-width: none;
             padding: 20px;
         }
     </style>
+  <script type="module" crossorigin src="/golf-configurator.bundle.js"></script>
+  <link rel="stylesheet" crossorigin href="/golf-configurator.bundle.css">
 </head>
 <body>
-    <div class="dev-notice">🧪 Development Mode - Mock Data</div>
-    
     <!-- Golf Configurator Container -->
     <div id="golf-configurator"></div>
     
-    <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
