@@ -7,7 +7,7 @@ import { PriceFormatter } from '../utils/formatters.js';
 
 // Detect development environment
 // Data source configuration - set to true to use real Shopify data locally
-const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
+const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
 
 const isDevelopment = import.meta.env.DEV;
 
