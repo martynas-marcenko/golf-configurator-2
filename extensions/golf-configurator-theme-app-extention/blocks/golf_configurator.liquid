@@ -1,11 +1,5 @@
 <!-- Golf Configurator App Container -->
-<div id="golf-configurator" 
-     style="display: none;"
-     data-title="{{ block.settings.title | default: 'Build Your Perfect Golf Set' }}"
-     data-description="{{ block.settings.description | default: 'Customize your golf clubs with premium shaft options and create the perfect set for your game.' }}"
-     data-show-pricing="{{ block.settings.show_pricing | default: true }}"
-     data-enable-shaft-upgrades="{{ block.settings.enable_shaft_upgrades | default: true }}"
-     data-max-clubs="{{ block.settings.max_clubs | default: 14 }}">
+<div id="golf-configurator" style="display: none;">
   <!-- The Preact app will be mounted here -->
 </div>
 
@@ -19,12 +13,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // The golf configurator will auto-initialize when the bundle loads
-    console.log('🏌️ Golf Configurator block loaded with settings:', {
-      title: '{{ block.settings.title | default: "Build Your Perfect Golf Set" }}',
-      showPricing: {{ block.settings.show_pricing | default: true }},
-      enableShaftUpgrades: {{ block.settings.enable_shaft_upgrades | default: true }},
-      maxClubs: {{ block.settings.max_clubs | default: 14 }}
-    });
+    console.log('🏌️ Golf Configurator block loaded');
   });
 </script>
 
@@ -32,44 +21,6 @@
 {
   "name": "Golf Configurator",
   "target": "section",
-  "settings": [
-    {
-      "type": "header",
-      "content": "Golf Configurator Settings"
-    },
-    {
-      "type": "text",
-      "id": "title",
-      "label": "Configurator Title",
-      "default": "Build Your Perfect Golf Set"
-    },
-    {
-      "type": "textarea",
-      "id": "description",
-      "label": "Description",
-      "default": "Customize your golf clubs with premium shaft options and create the perfect set for your game."
-    },
-    {
-      "type": "checkbox",
-      "id": "show_pricing",
-      "label": "Show Pricing",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_shaft_upgrades",
-      "label": "Enable Shaft Upgrades",
-      "default": true
-    },
-    {
-      "type": "range",
-      "id": "max_clubs",
-      "label": "Maximum Clubs Allowed",
-      "min": 5,
-      "max": 14,
-      "step": 1,
-      "default": 14
-    }
-  ]
+  "settings": []
 }
 {% endschema %}
