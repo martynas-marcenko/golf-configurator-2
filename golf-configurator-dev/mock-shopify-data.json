@@ -1,0 +1,285 @@
+{
+  "products": {
+    "iron_heads": {
+      "right_handed": {
+        "id": "iron_right_product_id",
+        "title": "Custom Iron Heads - Right Handed",
+        "variants": [
+          {
+            "id": "variant_right_4pw",
+            "title": "4-PW Set (Right)",
+            "price": 599.0,
+            "set_size": "4PW",
+            "club_count": 7,
+            "clubs": ["4", "5", "6", "7", "8", "9", "PW"],
+            "inventory_quantity": 50
+          },
+          {
+            "id": "variant_right_5pw",
+            "title": "5-PW Set (Right)",
+            "price": 549.0,
+            "set_size": "5PW",
+            "club_count": 6,
+            "clubs": ["5", "6", "7", "8", "9", "PW"],
+            "inventory_quantity": 45
+          },
+          {
+            "id": "variant_right_6pw",
+            "title": "6-PW Set (Right)",
+            "price": 499.0,
+            "set_size": "6PW",
+            "club_count": 5,
+            "clubs": ["6", "7", "8", "9", "PW"],
+            "inventory_quantity": 60
+          }
+        ]
+      },
+      "left_handed": {
+        "id": "iron_left_product_id",
+        "title": "Custom Iron Heads - Left Handed",
+        "variants": [
+          {
+            "id": "variant_left_4pw",
+            "title": "4-PW Set (Left)",
+            "price": 629.0,
+            "set_size": "4PW",
+            "club_count": 7,
+            "clubs": ["4", "5", "6", "7", "8", "9", "PW"],
+            "inventory_quantity": 25
+          },
+          {
+            "id": "variant_left_5pw",
+            "title": "5-PW Set (Left)",
+            "price": 579.0,
+            "set_size": "5PW",
+            "club_count": 6,
+            "clubs": ["5", "6", "7", "8", "9", "PW"],
+            "inventory_quantity": 30
+          },
+          {
+            "id": "variant_left_6pw",
+            "title": "6-PW Set (Left)",
+            "price": 529.0,
+            "set_size": "6PW",
+            "club_count": 5,
+            "clubs": ["6", "7", "8", "9", "PW"],
+            "inventory_quantity": 35
+          }
+        ]
+      }
+    },
+    "shafts": {
+      "KBS": {
+        "brand": "KBS",
+        "materials": ["Steel"],
+        "models": {
+          "Tour": {
+            "model": "Tour",
+            "variants": [
+              {
+                "id": "shaft_kbs_tour_regular",
+                "title": "KBS Tour Steel Regular",
+                "flex": "Regular",
+                "material": "Steel",
+                "surcharge_per_club": 15.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 100
+              },
+              {
+                "id": "shaft_kbs_tour_stiff",
+                "title": "KBS Tour Steel Stiff",
+                "flex": "Stiff",
+                "material": "Steel",
+                "surcharge_per_club": 15.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 85
+              },
+              {
+                "id": "shaft_kbs_tour_xstiff",
+                "title": "KBS Tour Steel X-Stiff",
+                "flex": "X-Stiff",
+                "material": "Steel",
+                "surcharge_per_club": 20.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 40
+              }
+            ]
+          }
+        }
+      },
+      "True_Temper": {
+        "brand": "True Temper",
+        "materials": ["Steel", "Graphite"],
+        "models": {
+          "Dynamic_Gold": {
+            "model": "Dynamic Gold",
+            "variants": [
+              {
+                "id": "shaft_tt_dg_regular",
+                "title": "True Temper Dynamic Gold Steel Regular",
+                "flex": "Regular",
+                "material": "Steel",
+                "surcharge_per_club": 25.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 75
+              },
+              {
+                "id": "shaft_tt_dg_stiff",
+                "title": "True Temper Dynamic Gold Steel Stiff",
+                "flex": "Stiff",
+                "material": "Steel",
+                "surcharge_per_club": 25.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 0
+              }
+            ]
+          },
+          "Project_X": {
+            "model": "Project X",
+            "variants": [
+              {
+                "id": "shaft_tt_px_graphite_regular",
+                "title": "True Temper Project X Graphite Regular",
+                "flex": "Regular",
+                "material": "Graphite",
+                "surcharge_per_club": 45.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 55
+              },
+              {
+                "id": "shaft_tt_px_graphite_stiff",
+                "title": "True Temper Project X Graphite Stiff",
+                "flex": "Stiff",
+                "material": "Graphite",
+                "surcharge_per_club": 45.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 30
+              }
+            ]
+          }
+        }
+      },
+      "Nippon": {
+        "brand": "Nippon",
+        "materials": ["Steel"],
+        "models": {
+          "Modus3": {
+            "model": "Modus3",
+            "variants": [
+              {
+                "id": "shaft_nippon_modus3_regular",
+                "title": "Nippon Modus3 Steel Regular",
+                "flex": "Regular",
+                "material": "Steel",
+                "surcharge_per_club": 35.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 65
+              },
+              {
+                "id": "shaft_nippon_modus3_stiff",
+                "title": "Nippon Modus3 Steel Stiff",
+                "flex": "Stiff",
+                "material": "Steel",
+                "surcharge_per_club": 35.0,
+                "available_for": ["right", "left"],
+                "inventory_quantity": 45
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "grips": [
+    {
+      "id": "grip_golfpride_mcc_standard",
+      "brand": "Golf Pride",
+      "model": "MCC",
+      "size": "Standard",
+      "price_impact": 0.0
+    },
+    {
+      "id": "grip_golfpride_mcc_midsize",
+      "brand": "Golf Pride",
+      "model": "MCC",
+      "size": "Midsize",
+      "price_impact": 0.0
+    },
+    {
+      "id": "grip_lamkin_crossline_standard",
+      "brand": "Lamkin",
+      "model": "Crossline",
+      "size": "Standard",
+      "price_impact": 0.0
+    },
+    {
+      "id": "grip_lamkin_crossline_midsize",
+      "brand": "Lamkin",
+      "model": "Crossline",
+      "size": "Midsize",
+      "price_impact": 0.0
+    },
+    {
+      "id": "grip_lamkin_crossline_jumbo",
+      "brand": "Lamkin",
+      "model": "Crossline",
+      "size": "Jumbo",
+      "price_impact": 0.0
+    }
+  ],
+  "specifications": {
+    "length_options": ["Standard -1.0\"", "Standard -0.5\"", "Standard", "Standard +0.5\"", "Standard +1.0\""],
+    "lie_options": ["-2°", "-1°", "Standard", "+1°", "+2°"]
+  },
+  "wedges": {
+    "right_handed": [
+      {
+        "id": "wedge_right_gap",
+        "title": "Gap Wedge (Right)",
+        "club": "G",
+        "price": 89.0,
+        "inventory_quantity": 40
+      },
+      {
+        "id": "wedge_right_sand",
+        "title": "Sand Wedge (Right)",
+        "club": "S",
+        "price": 89.0,
+        "inventory_quantity": 35
+      },
+      {
+        "id": "wedge_right_lob",
+        "title": "Lob Wedge (Right)",
+        "club": "L",
+        "price": 89.0,
+        "inventory_quantity": 30
+      }
+    ],
+    "left_handed": [
+      {
+        "id": "wedge_left_gap",
+        "title": "Gap Wedge (Left)",
+        "club": "G",
+        "price": 99.0,
+        "inventory_quantity": 20
+      },
+      {
+        "id": "wedge_left_sand",
+        "title": "Sand Wedge (Left)",
+        "club": "S",
+        "price": 99.0,
+        "inventory_quantity": 18
+      },
+      {
+        "id": "wedge_left_lob",
+        "title": "Lob Wedge (Left)",
+        "club": "L",
+        "price": 99.0,
+        "inventory_quantity": 15
+      }
+    ]
+  },
+  "availability": {
+    "hands": ["right", "left"]
+  }
+}
