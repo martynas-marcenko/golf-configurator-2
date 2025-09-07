@@ -3,6 +3,56 @@ query CartTransformRunInput {
     lines {
       id
       quantity
+      cost {
+        amountPerQuantity {
+          amount
+          currencyCode
+        }
+        totalAmount {
+          amount
+          currencyCode
+        }
+      }
+      merchandise {
+        ... on ProductVariant {
+          id
+          sku
+          title
+        }
+      }
+      bundleId: attribute(key: "bundleId") {
+        value
+      }
+      hand: attribute(key: "hand") {
+        value
+      }
+      setSize: attribute(key: "setSize") {
+        value
+      }
+      ironVariantId: attribute(key: "iron_variant_id") {
+        value
+      }
+      clubList: attribute(key: "club_list") {
+        value
+      }
+      headPrice: attribute(key: "head_price") {
+        value
+      }
+      shaftVariantId: attribute(key: "shaft_variant_id") {
+        value
+      }
+      shaftName: attribute(key: "shaft_name") {
+        value
+      }
+      componentType: attribute(key: "component_type") {
+        value
+      }
+      shaftBrand: attribute(key: "shaft_brand") {
+        value
+      }
+      clubCount: attribute(key: "club_count") {
+        value
+      }
     }
   }
 }
