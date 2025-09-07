@@ -163,3 +163,12 @@ export const shaftService = isDevelopment ? new MockShaftService() : new ShaftSe
 - Theme Extension: `golf-configurator/extensions/golf-configurator-theme-app-extention/`
 - Cart Transformer: `golf-configurator/extensions/cart-transformer/`
 - Built Assets: Auto-generated from `golf-configurator-dev/` build process
+
+## Git Workflow Rules
+
+**IMPORTANT**: Claude must NEVER commit changes automatically. Only commit when explicitly requested via the `/commit` command.
+
+- **DO NOT** run `git commit` commands automatically after making changes
+- **WAIT** for the user to run `/commit` when they want to create a commit
+- The `/commit` command uses conventional commit format with emojis (see `.claude/commands/commit.md`)
+- Make code changes and fixes as needed, but always wait for explicit commit instruction

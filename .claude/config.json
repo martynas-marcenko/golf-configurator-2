@@ -1,0 +1,8 @@
+{
+  "commit_behavior": {
+    "auto_commit": false,
+    "require_confirmation": true,
+    "show_diff_before_commit": true,
+    "allow_empty_commits": false
+  }
+}
