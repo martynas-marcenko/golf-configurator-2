@@ -8,8 +8,12 @@ import { ShaftPicker } from './ShaftPicker';
 import {
   selectedHand,
   selectedClubs,
+  selectedGrip,
+  selectedLength,
+  selectedLie,
   handOptions,
   currentClubs,
+  canAddToCart,
   actions,
   error,
   isLoading,
@@ -41,10 +45,6 @@ export function GolfConfigurator() {
   console.log('🎯 BUILD: New step-based UI with progress indicator');
 
   const [currentStep, setCurrentStep] = useState(0);
-
-  // Grip selection state
-  const [selectedGripBrand, setSelectedGripBrand] = useState('');
-  const [selectedGripSize, setSelectedGripSize] = useState('');
 
   // Helper functions
   const isClubSelected = (clubNumber) => {
@@ -105,26 +105,29 @@ export function GolfConfigurator() {
 
   const reset = () => {
     setCurrentStep(0);
-    actions.setHand('right-handed');
-    // Reset grip selections
-    setSelectedGripBrand('');
-    setSelectedGripSize('');
-    // Default clubs are maintained by state - no need to re-initialize
+    actions.reset(); // Use the global reset from state management
     console.log('Reset functionality - full reset performed');
   };
 
   // Removed old goToNextStep - replaced with handleNext
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) {
       setCurrentStep(1);
     } else if (currentStep === 1) {
       // For now, allow progression from shaft step (ShaftPicker handles its own validation)
       setCurrentStep(2);
-    } else if (currentStep === 2 && selectedGripBrand && selectedGripSize) {
+    } else if (currentStep === 2 && selectedGrip.value?.brand && selectedGrip.value?.size) {
       setCurrentStep(3);
+    } else if (currentStep === 3 && canAddToCart.value) {
+      // Trigger Add to Cart functionality
+      console.log('🛒 Add to Cart button clicked');
+      const success = await actions.addToCart();
+      if (success) {
+        console.log('✅ Successfully added to cart!');
+        // Could reset or show success message
+      }
     }
-    // Step 3 (Edit) would trigger Add to Cart functionality
   };
 
   const goToStep = (stepIndex) => {
@@ -150,7 +153,7 @@ export function GolfConfigurator() {
 
     // Step 3 (Review) unlocked when grip requirements are met
     if (selectedHand.value && selectedClubs.value.length >= 5 && 
-        selectedGripBrand && selectedGripSize) {
+        selectedGrip.value?.brand && selectedGrip.value?.size) {
       maxStep = 3;
     }
 
@@ -374,7 +377,18 @@ export function GolfConfigurator() {
             {/* Grip Brand Selection */}
             <div className='mb-6'>
               <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Brand</h2>
-              <SelectRoot value={selectedGripBrand} onValueChange={setSelectedGripBrand}>
+              <SelectRoot 
+                value={selectedGrip.value?.brand || ''} 
+                onValueChange={(brand) => {
+                  console.log('🤲 UI EVENT: Grip brand selection:', brand);
+                  if (selectedGrip.value?.size) {
+                    actions.setGrip(brand, selectedGrip.value.size);
+                  } else {
+                    // Temporarily set brand, wait for size selection
+                    selectedGrip.value = { brand, size: '' };
+                  }
+                }}
+              >
                 {({ value, open, setOpen, onValueChange, onKeyDown }) => (
                   <>
                     <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
@@ -393,10 +407,18 @@ export function GolfConfigurator() {
             </div>
 
             {/* Grip Size Selection */}
-            {selectedGripBrand && (
+            {selectedGrip.value?.brand && (
               <div className='mb-6'>
                 <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Size</h2>
-                <SelectRoot value={selectedGripSize} onValueChange={setSelectedGripSize}>
+                <SelectRoot 
+                  value={selectedGrip.value?.size || ''} 
+                  onValueChange={(size) => {
+                    console.log('🤲 UI EVENT: Grip size selection:', size);
+                    if (selectedGrip.value?.brand) {
+                      actions.setGrip(selectedGrip.value.brand, size);
+                    }
+                  }}
+                >
                   {({ value, open, setOpen, onValueChange, onKeyDown }) => (
                     <>
                       <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
@@ -482,8 +504,8 @@ export function GolfConfigurator() {
                 <div>
                   <span className='text-sm text-muted-foreground'>Grip</span>
                   <p className='font-medium text-base'>
-                    {selectedGripBrand && selectedGripSize
-                      ? `${selectedGripBrand}, ${selectedGripSize}`
+                    {selectedGrip.value?.brand && selectedGrip.value?.size
+                      ? `${selectedGrip.value.brand}, ${selectedGrip.value.size}`
                       : 'Not configured'}
                   </p>
                 </div>
@@ -506,25 +528,36 @@ export function GolfConfigurator() {
             'mb-4 w-full h-12 text-base font-medium rounded-full transition-all duration-200',
             (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) ||
               (currentStep === 1) ||
-              (currentStep === 2 && selectedGripBrand && selectedGripSize) ||
-              currentStep === 3
+              (currentStep === 2 && selectedGrip.value?.brand && selectedGrip.value?.size) ||
+              (currentStep === 3 && canAddToCart.value)
               ? 'bg-black hover:bg-black/90 text-white'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
           )}
           onClick={handleNext}
           disabled={
             (currentStep === 0 && (!selectedHand.value || selectedClubs.value.length < 5)) ||
-            (currentStep === 2 && (!selectedGripBrand || !selectedGripSize))
+            (currentStep === 2 && (!selectedGrip.value?.brand || !selectedGrip.value?.size)) ||
+            (currentStep === 3 && !canAddToCart.value) ||
+            isLoading.value
           }
         >
-          {currentStep === 0
-            ? 'Next / Shaft'
-            : currentStep === 1
-            ? 'Next / Grip'
-            : currentStep === 2
-            ? 'Next / Edit'
-            : 'Add to Cart'}
-          <ChevronRight className='ml-2 h-4 w-4' />
+          {isLoading.value ? (
+            <>
+              <div className='animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2'></div>
+              Adding...
+            </>
+          ) : (
+            <>
+              {currentStep === 0
+                ? 'Next / Shaft'
+                : currentStep === 1
+                ? 'Next / Grip'
+                : currentStep === 2
+                ? 'Next / Review'
+                : 'Add to Cart'}
+              <ChevronRight className='ml-2 h-4 w-4' />
+            </>
+          )}
         </Button>
 
         {/* Footer */}

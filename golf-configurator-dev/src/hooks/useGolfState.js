@@ -4,7 +4,7 @@ import * as shaftService from '../services/ShaftService.js';
 import { PriceFormatter } from '../utils/formatters.js';
 
 // Data source configuration - set to true to use real Shopify data locally
-export const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
+export const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
 
 // FORCE RELOAD TEST - This should show up in console
 console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOString());
@@ -27,6 +27,9 @@ export const selectedClubs = signal([
   { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
 ]); // Start with only required clubs (6-PW) pre-selected
 export const selectedShafts = signal({});
+export const selectedGrip = signal(null); // { brand: string, size: string }
+export const selectedLength = signal('Standard'); // Default length
+export const selectedLie = signal('Standard'); // Default lie
 export const isLoading = signal(false);
 export const error = signal(null);
 
@@ -47,9 +50,9 @@ export const handOptions = signal([
 // Computed iron set type based on selected clubs
 export const ironSetType = computed(() => {
   const clubIds = selectedClubs.value.map((club) => club.id);
-  if (clubIds.includes('4')) return '4-PW';
-  if (clubIds.includes('5')) return '5-PW';
-  return '6-PW';
+  if (clubIds.includes('4')) return '4PW'; // Match ProductService keys (no hyphen)
+  if (clubIds.includes('5')) return '5PW'; // Match ProductService keys (no hyphen)
+  return '6PW'; // Match ProductService keys (no hyphen)
 });
 
 // Club definitions matching vanilla JS logic (iron sets only)
@@ -99,7 +102,10 @@ export const formattedTotalPrice = computed(() => {
 });
 
 export const canAddToCart = computed(() => {
-  return selectedHand.value && selectedClubs.value.length >= 5; // Minimum 5 clubs required
+  return selectedHand.value && 
+         selectedClubs.value.length >= 5 && 
+         selectedGrip.value?.brand && 
+         selectedGrip.value?.size; // Require hand, clubs, and grip selections
 });
 
 // Actions matching vanilla JS functionality
@@ -174,6 +180,26 @@ export const actions = {
     console.log(`   📊 Updated shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs now have shafts');
   },
 
+  setGrip(brand, size) {
+    console.log(`🤲 USER SELECTION: Grip selection changed`);
+    console.log(`   🔧 Previous grip: ${selectedGrip.value ? `${selectedGrip.value.brand} ${selectedGrip.value.size}` : 'None'}`);
+    console.log(`   🔧 Selected grip: ${brand} ${size}`);
+    selectedGrip.value = { brand, size };
+    console.log(`✅ SELECTION APPLIED: Grip set to "${brand} ${size}"`);
+  },
+
+  setLength(length) {
+    console.log(`📏 USER SELECTION: Length changed from "${selectedLength.value}" to "${length}"`);
+    selectedLength.value = length;
+    console.log(`✅ SELECTION APPLIED: Length set to "${length}"`);
+  },
+
+  setLie(lie) {
+    console.log(`📐 USER SELECTION: Lie changed from "${selectedLie.value}" to "${lie}"`);
+    selectedLie.value = lie;
+    console.log(`✅ SELECTION APPLIED: Lie set to "${lie}"`);
+  },
+
   async loadShaftOptions(brandName) {
     console.log(`🚀 API REQUEST: Loading shaft options for brand "${brandName}"`);
     console.log(`   📊 Available brands: ${shaftService.getAvailableBrands().join(', ')}`);
@@ -220,10 +246,14 @@ export const actions = {
     try {
       // Get the iron variant based on computed iron set type
       const setType = ironSetType.value;
+      console.log('🏌️ DEBUG: Iron set type:', setType);
       const cachedProducts = productService.getCachedProducts();
+      console.log('🏌️ DEBUG: Cached products keys:', Object.keys(cachedProducts));
+      console.log('🏌️ DEBUG: Full cached products:', cachedProducts);
       const productInfo = cachedProducts[setType];
+      console.log('🏌️ DEBUG: Product info for', setType, ':', productInfo);
       if (!productInfo) {
-        throw new Error('Product information not available!');
+        throw new Error(`Product information not available for set type "${setType}"! Available: ${Object.keys(cachedProducts).join(', ')}`);
       }
 
       const ironVariant = productService.findVariantBySetSize(setType, selectedHand.value);
@@ -238,22 +268,29 @@ export const actions = {
       const bundleId = `golf-${Date.now()}`;
       console.log('🎯 Generated bundleId:', bundleId);
 
-      // Prepare cart add data - Real Product Approach (like vanilla)
+      // Prepare cart add data - Real Product Approach matching cart transformer
       const cartItems = [
         {
           id: ironVariant.id, // Use actual iron variant ID
           quantity: 1,
           properties: {
-            bundleId: bundleId, // Use generated bundle ID
+            bundleId: bundleId,
             hand: selectedHand.value,
             setSize: ironSetType.value,
-            club_list: JSON.stringify(selectedClubs.value.map((club) => club.id)),
+            clubList: JSON.stringify(selectedClubs.value.map((club) => club.id)), // Note: changed to clubList to match transformer
             // Add shaft properties if selected
             ...(selectedShafts.value &&
               Object.keys(selectedShafts.value).length > 0 && {
                 shaft_variant_id: Object.values(selectedShafts.value)[0],
-                shaft_name: 'Selected Shaft',
+                shaftName: 'Selected Shaft', // Note: changed to shaftName to match transformer
               }),
+            // Add grip properties
+            ...(selectedGrip.value && {
+              grip: `${selectedGrip.value.brand} ${selectedGrip.value.size}`,
+            }),
+            // Add length and lie adjustments
+            length: selectedLength.value,
+            lie: selectedLie.value,
           },
         },
       ];
@@ -269,9 +306,9 @@ export const actions = {
           quantity: clubCount, // One shaft per club
           properties: {
             bundleId: bundleId, // Same bundle ID to group with iron set
-            component_type: 'shaft',
-            shaft_brand: 'Selected Shaft',
-            club_count: clubCount.toString(),
+            componentType: 'shaft', // Note: changed to componentType to match transformer
+            shaftBrand: 'Selected Shaft', // Note: changed to shaftBrand to match transformer
+            clubCount: clubCount.toString(), // Note: changed to clubCount to match transformer
           },
         });
         console.log('🏌️ Shaft item added with quantity:', clubCount);
@@ -328,10 +365,8 @@ export const actions = {
   reset() {
     console.log('🔄 Resetting configurator state');
     selectedHand.value = null;
-    // Reset to all clubs pre-selected
+    // Reset to default clubs pre-selected (only required clubs)
     selectedClubs.value = [
-      { id: '4', name: '4-Iron', type: 'iron', isRequired: false, isOptional: true },
-      { id: '5', name: '5-Iron', type: 'iron', isRequired: false, isOptional: true },
       { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
       { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
       { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
@@ -339,6 +374,9 @@ export const actions = {
       { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
     ];
     selectedShafts.value = {};
+    selectedGrip.value = null;
+    selectedLength.value = 'Standard';
+    selectedLie.value = 'Standard';
     error.value = null;
   },
 };
@@ -350,6 +388,10 @@ if (typeof window !== 'undefined') {
     selectedClubs,
     ironSetType,
     selectedShafts,
+    selectedGrip,
+    selectedLength,
+    selectedLie,
+    canAddToCart,
     isLoading,
     error,
     actions,
