@@ -33,21 +33,23 @@ export class ShaftService {
   }
 
   async loadShaftDataForBrand(brandName) {
-    console.log(`🚀 STARTING loadShaftDataForBrand for: ${brandName}`);
+    console.log(`🏌️ API CALL: Loading shaft data for brand "${brandName}"`);
 
     if (this.brandData[brandName]) {
-      console.log(`📦 Using cached data for brand: ${brandName}`);
+      console.log(`📦 CACHED DATA: Using existing data for brand "${brandName}"`);
+      console.log(`📊 AVAILABLE OPTIONS: ${this.brandData[brandName].length} shaft variants cached`);
       return this.brandData[brandName];
     }
 
     const variantIds = this.SHAFT_BRAND_MAPPING[brandName];
     if (!variantIds) {
-      console.warn(`❌ Unknown shaft brand: ${brandName}`);
-      console.log('🗺️ Available brands:', Object.keys(this.SHAFT_BRAND_MAPPING));
+      console.warn(`❌ UNKNOWN BRAND: "${brandName}" not found in mapping`);
+      console.log('📋 AVAILABLE BRANDS:', Object.keys(this.SHAFT_BRAND_MAPPING));
       return [];
     }
 
-    console.log(`🔄 Loading shaft data for brand: ${brandName}`);
+    console.log(`🔄 FETCHING: ${variantIds.length} shaft variants for "${brandName}"`);
+    console.log('🆔 Target variant IDs:', variantIds);
     console.log(`📋 Variant IDs for ${brandName}:`, variantIds);
     console.log(`📊 Total variants to search for: ${variantIds.length}`);
 
@@ -55,19 +57,17 @@ export class ShaftService {
 
     try {
       // Use the same reliable API pattern as ProductService
-      console.log('🌐 About to call loadVariantsByIds...');
+      console.log('🌐 API CALL: Calling loadVariantsByIds...');
       const variants = await this.loadVariantsByIds(variantIds);
-      console.log(`🔍 loadVariantsByIds returned ${variants.length} variants`);
+      console.log(`✅ FETCHED DATA: Received ${variants.length} variants from API`);
 
+      console.group('📋 Processing Shaft Variants:');
       for (const [index, variant] of variants.entries()) {
-        console.log(`🔧 Processing variant ${index + 1}/${variants.length}:`, {
-          id: variant.id,
-          title: variant.title,
-          price: variant.price,
-          available: variant.available,
-          inventory: variant.inventory_quantity,
-          productTitle: variant.product?.title,
-        });
+        console.log(`🔧 Processing variant ${index + 1}/${variants.length}: ${variant.title}`);
+        console.log(`   💰 Price: £${(variant.price / 100).toFixed(2)}`);
+        console.log(`   📦 Available: ${variant.available}`);
+        console.log(`   🏭 Product: ${variant.product?.title}`);
+        console.log(`   🆔 ID: ${variant.id}`);
 
         if (variant) {
           const shaftOption = {
@@ -82,13 +82,22 @@ export class ShaftService {
             quantityAvailable: variant.inventory_quantity || 0,
           };
 
-          console.log(`➕ Adding shaft option:`, shaftOption);
+          console.log(`   ✅ Created option: ${shaftOption.displayName}`);
           shaftOptions.push(shaftOption);
         }
       }
+      console.groupEnd();
 
-      console.log(`✅ FINAL RESULT: Loaded ${shaftOptions.length} shaft options for ${brandName}`);
-      console.log(`📋 Shaft options:`, shaftOptions);
+      console.log(`✅ FINAL RESULT: Loaded ${shaftOptions.length} shaft options for "${brandName}"`);
+      console.group('📊 AVAILABLE OPTIONS Summary:');
+      shaftOptions.forEach((option, i) => {
+        console.log(
+          `${i + 1}. ${option.displayName} - £${(option.price / 100).toFixed(2)} (${
+            option.available ? 'Available' : 'Unavailable'
+          })`
+        );
+      });
+      console.groupEnd();
 
       this.brandData[brandName] = shaftOptions;
       return shaftOptions;

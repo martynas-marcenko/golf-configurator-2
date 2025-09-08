@@ -13,22 +13,34 @@ export class ProductService {
   async fetchClubHeadProducts() {
     const expectedVariantIDs = {
       '4PW': '55435517559108',
-      '5PW': '55435517591876', 
+      '5PW': '55435517591876',
       '6PW': '55435517624644',
     };
 
     const productHandle = 'origin-combo-length-chrome';
 
     try {
-      console.log('🏌️ Fetching club head product...');
+      console.log('🏌️ API CALL: Fetching club head product from Shopify...');
+      console.log('🏌️ Expected variant IDs:', expectedVariantIDs);
+      console.log('🏌️ Product handle:', productHandle);
 
       const foundProducts = {};
       const response = await fetch(`/products/${productHandle}.js`);
 
       if (response.ok) {
         const product = await response.json();
-        console.log(`✅ Fetched product: ${product.title}`);
+        console.log('🏌️ Product data:', product);
+        console.log(`✅ FETCHED DATA: Product "${product.title}"`);
+        console.log('📊 AVAILABLE OPTIONS: Product has', product.variants.length, 'total variants');
 
+        // Log all available variants
+        console.group('📋 All Available Variants:');
+        product.variants.forEach((variant, index) => {
+          console.log(`${index + 1}. ${variant.title} - £${(variant.price / 100).toFixed(2)} (ID: ${variant.id})`);
+        });
+        console.groupEnd();
+
+        console.group('🔍 Matching Target Variants:');
         for (const [setSize, expectedVariantId] of Object.entries(expectedVariantIDs)) {
           const targetVariant = product.variants.find((v) => v.id.toString() === expectedVariantId);
 
@@ -39,25 +51,30 @@ export class ProductService {
               setSize: setSize,
             };
             console.log(
-              `✅ Found ${setSize}:`,
-              targetVariant.title || setSize,
-              `(£${(targetVariant.price / 100).toFixed(2)}) - Variant ID: ${targetVariant.id}`
+              `✅ MATCHED ${setSize}: ${targetVariant.title} - £${(targetVariant.price / 100).toFixed(2)} (ID: ${
+                targetVariant.id
+              })`
             );
           } else {
-            console.warn(`Could not find variant ${expectedVariantId} for ${setSize}`);
+            console.warn(`❌ MISSING ${setSize}: Could not find variant ${expectedVariantId}`);
           }
         }
+        console.groupEnd();
       } else {
-        console.warn(`Product handle '${productHandle}' returned ${response.status}`);
+        console.warn(`❌ API ERROR: Product handle '${productHandle}' returned ${response.status}`);
       }
 
       if (Object.keys(foundProducts).length === 0) {
-        console.log('Handle fetching failed, trying bulk product search...');
+        console.log('🔄 FALLBACK: Handle fetching failed, trying bulk product search...');
         return this.fetchByBulkSearch(expectedVariantIDs);
       }
 
       this.clubHeadProducts = foundProducts;
-      console.log('✅ Club head products loaded:', Object.keys(foundProducts));
+      console.log('✅ FINAL RESULT: Club head products loaded successfully');
+      console.log(
+        '📊 LOADED OPTIONS:',
+        Object.keys(foundProducts).map((key) => `${key} (${foundProducts[key].variant.title})`)
+      );
 
       return foundProducts;
     } catch (error) {

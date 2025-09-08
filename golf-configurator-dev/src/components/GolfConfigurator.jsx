@@ -4,6 +4,7 @@ import { ChevronRight, Check } from 'lucide-react';
 import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Tooltip } from './ui/tooltip';
 import { Toast } from './Toast';
+import { ShaftPicker } from './ShaftPicker';
 import {
   selectedHand,
   selectedClubs,
@@ -25,73 +26,6 @@ const steps = [
 
 const ironNumbers = ['4', '5', '6', '7', '8', '9', 'P'];
 
-// Shaft configuration from your existing business logic
-const shaftBrands = {
-  'KBS Tour Lite': {
-    materials: {
-      'Steel': {
-        flexOptions: [
-          { flex: 'Regular', price: 150 },
-          { flex: 'Stiff', price: 154 },
-          { flex: 'Extra Stiff', price: 160 },
-        ],
-      },
-      'Graphite': {
-        flexOptions: [
-          { flex: 'Regular', price: 175 },
-          { flex: 'Stiff', price: 180 },
-          { flex: 'Extra Stiff', price: 185 },
-        ],
-      },
-    },
-  },
-  'KBS Tour Matte Black': {
-    material: 'Steel',
-    flexOptions: [
-      { flex: 'Regular', price: 150 },
-      { flex: 'Stiff', price: 154 },
-      { flex: 'Extra Stiff', price: 160 },
-    ],
-  },
-  'Fujikura Axiom': {
-    material: 'Graphite',
-    flexOptions: [
-      { flex: 'Regular', price: 150 },
-      { flex: 'Stiff', price: 154 },
-      { flex: 'Extra Stiff', price: 160 },
-    ],
-  },
-  'UST Mamiya': {
-    material: 'Graphite',
-    flexOptions: [
-      { flex: 'Regular', price: 150 },
-      { flex: 'Stiff', price: 154 },
-      { flex: 'Extra Stiff', price: 160 },
-    ],
-  },
-};
-
-const shaftLengths = [
-  '-2"',
-  '-1.75"',
-  '-1.5"',
-  '-1.25"',
-  '-1"',
-  '-0.75"',
-  '-0.5"',
-  '-0.25"',
-  'Standard',
-  '+0.25"',
-  '+0.5"',
-  '+0.75"',
-  '+1"',
-  '+1.25"',
-  '+1.5"',
-  '+1.75"',
-  '+2"',
-];
-
-const lieAdjustments = ['2.0 Deg Up', '1.0 Deg Up', 'Standard', '1.0 Deg Flat', '2.0 Deg Flat'];
 
 const gripBrands = ['Golf Pride Tour Velvet', 'Golf Pride MCC', 'Lamkin Crossline', 'Lamkin UTx', 'Winn DriTac'];
 const gripSizes = ['Standard', 'Midsize', 'Jumbo'];
@@ -108,13 +42,6 @@ export function GolfConfigurator() {
 
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Shaft selection state
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState('');
-  const [selectedFlex, setSelectedFlex] = useState('');
-  const [selectedLie, setSelectedLie] = useState('Standard');
-  const [selectedLength, setSelectedLength] = useState('Standard');
-
   // Grip selection state
   const [selectedGripBrand, setSelectedGripBrand] = useState('');
   const [selectedGripSize, setSelectedGripSize] = useState('');
@@ -129,21 +56,6 @@ export function GolfConfigurator() {
   // Check if a club is locked (6, 7, 8, 9, PW cannot be deselected)
   const isClubLocked = (clubNumber) => {
     return ['6', '7', '8', '9', 'P'].includes(clubNumber);
-  };
-
-  // Check if brand requires material selection (KBS Tour Lite has both Steel and Graphite)
-  const brandRequiresMaterial = (brand) => {
-    return brand === 'KBS Tour Lite';
-  };
-
-  // Get available flex options based on brand and material
-  const getFlexOptions = (brand, material) => {
-    if (brand === 'KBS Tour Lite' && material) {
-      return shaftBrands[brand].materials[material].flexOptions;
-    } else if (brand && shaftBrands[brand] && !brandRequiresMaterial(brand)) {
-      return shaftBrands[brand].flexOptions;
-    }
-    return [];
   };
 
   const toggleIron = (ironNumber) => {
@@ -194,12 +106,6 @@ export function GolfConfigurator() {
   const reset = () => {
     setCurrentStep(0);
     actions.setHand('right-handed');
-    // Reset shaft selections
-    setSelectedBrand('');
-    setSelectedMaterial('');
-    setSelectedFlex('');
-    setSelectedLie('Standard');
-    setSelectedLength('Standard');
     // Reset grip selections
     setSelectedGripBrand('');
     setSelectedGripSize('');
@@ -213,17 +119,8 @@ export function GolfConfigurator() {
     if (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) {
       setCurrentStep(1);
     } else if (currentStep === 1) {
-      // Check shaft requirements: brand, material (if needed), flex, lie, length
-      const materialRequired = brandRequiresMaterial(selectedBrand);
-      const shaftComplete = selectedBrand && 
-        (!materialRequired || selectedMaterial) && 
-        selectedFlex && 
-        selectedLie && 
-        selectedLength;
-      
-      if (shaftComplete) {
-        setCurrentStep(2);
-      }
+      // For now, allow progression from shaft step (ShaftPicker handles its own validation)
+      setCurrentStep(2);
     } else if (currentStep === 2 && selectedGripBrand && selectedGripSize) {
       setCurrentStep(3);
     }
@@ -246,20 +143,13 @@ export function GolfConfigurator() {
       maxStep = 1;
     }
 
-    // Step 2 (Grip) unlocked when shaft requirements are completely met
-    const materialRequired = brandRequiresMaterial(selectedBrand);
-    const shaftComplete = selectedBrand && 
-      (!materialRequired || selectedMaterial) && 
-      selectedFlex && 
-      selectedLie && 
-      selectedLength;
-    
-    if (selectedHand.value && selectedClubs.value.length >= 5 && shaftComplete) {
+    // Step 2 (Grip) unlocked when step 1 is accessible (simplified for now)
+    if (selectedHand.value && selectedClubs.value.length >= 5) {
       maxStep = 2;
     }
 
     // Step 3 (Review) unlocked when grip requirements are met
-    if (selectedHand.value && selectedClubs.value.length >= 5 && shaftComplete && 
+    if (selectedHand.value && selectedClubs.value.length >= 5 && 
         selectedGripBrand && selectedGripSize) {
       maxStep = 3;
     }
@@ -477,179 +367,7 @@ export function GolfConfigurator() {
           </div>
         )}
 
-        {currentStep === 1 && (
-          <>
-            {/* Brand Selection */}
-            <div className='mb-6'>
-              <h2 className='mb-3 text-base font-bold text-foreground'>Select Shaft Brand</h2>
-              <SelectRoot
-                value={selectedBrand}
-                onValueChange={(value) => {
-                  setSelectedBrand(value);
-                  setSelectedMaterial(''); // Reset material when brand changes
-                  setSelectedFlex('');
-                  setSelectedLie('Standard');
-                }}
-              >
-                {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-                  <>
-                    <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                      <SelectValue placeholder='Choose a brand...' value={value} />
-                    </SelectTrigger>
-                    <SelectContent open={open}>
-                      {Object.keys(shaftBrands).map((brand) => (
-                        <SelectItem key={brand} value={brand} selected={value === brand} onValueChange={onValueChange}>
-                          <span className='font-medium'>{brand}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </>
-                )}
-              </SelectRoot>
-            </div>
-
-            {/* Material Selection - only for KBS Tour Lite */}
-            {selectedBrand && brandRequiresMaterial(selectedBrand) && (
-              <div className='mb-6'>
-                <h2 className='mb-3 text-base font-bold text-foreground'>Select Shaft Material</h2>
-                <SelectRoot
-                  value={selectedMaterial}
-                  onValueChange={(value) => {
-                    setSelectedMaterial(value);
-                    setSelectedFlex(''); // Reset flex when material changes
-                  }}
-                >
-                  {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-                    <>
-                      <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                        <SelectValue placeholder='Choose material...' value={value} />
-                      </SelectTrigger>
-                      <SelectContent open={open}>
-                        {Object.keys(shaftBrands[selectedBrand].materials).map((material) => (
-                          <SelectItem key={material} value={material} selected={value === material} onValueChange={onValueChange}>
-                            <span className='font-medium'>{material}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </>
-                  )}
-                </SelectRoot>
-              </div>
-            )}
-
-            {/* Flex Selection */}
-            {selectedBrand && (!brandRequiresMaterial(selectedBrand) || selectedMaterial) && (
-              <div className='mb-6'>
-                <h2 className='mb-3 text-base font-bold text-foreground'>Select Flex</h2>
-                <div className='grid grid-cols-3 gap-4'>
-                  {getFlexOptions(selectedBrand, selectedMaterial).map((option) => (
-                    <button
-                      key={option.flex}
-                      onClick={() => setSelectedFlex(option.flex)}
-                      className={cn(
-                        'group relative h-16 w-full rounded-lg border-2 transition-all duration-200 ease-in-out',
-                        'flex flex-col items-center justify-center text-base font-semibold',
-                        'hover:shadow-lg hover:-translate-y-1',
-                        selectedFlex === option.flex
-                          ? 'border-black bg-black/10 shadow-md shadow-black/20'
-                          : 'border-border bg-card hover:border-muted-foreground hover:bg-muted'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'transition-colors duration-200 mb-1',
-                          selectedFlex === option.flex
-                            ? 'text-black'
-                            : 'text-card-foreground group-hover:text-foreground'
-                        )}
-                      >
-                        {option.flex}
-                      </span>
-                      <span
-                        className={cn(
-                          'text-sm transition-colors duration-200',
-                          selectedFlex === option.flex ? 'text-black/70' : 'text-muted-foreground'
-                        )}
-                      >
-                        £{option.price}
-                      </span>
-
-                      {selectedFlex === option.flex && (
-                        <div
-                          className={cn(
-                            'absolute -top-2 -right-2 h-6 w-6 rounded-full transition-all duration-300 ease-in-out',
-                            'flex items-center justify-center shadow-lg',
-                            'bg-black scale-100 opacity-100'
-                          )}
-                        >
-                          <Check className='h-3.5 w-3.5 text-white' strokeWidth={3} />
-                        </div>
-                      )}
-
-                      {selectedFlex === option.flex && (
-                        <div className='absolute inset-0 rounded-lg bg-black/5 ring-1 ring-black/20' />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lie Adjustment Selection */}
-            {selectedBrand && (!brandRequiresMaterial(selectedBrand) || selectedMaterial) && (
-              <div className='mb-6'>
-                <h2 className='mb-3 text-base font-bold text-foreground'>Select Lie Adjustment</h2>
-                <SelectRoot value={selectedLie} onValueChange={setSelectedLie}>
-                  {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-                    <>
-                      <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                        <SelectValue placeholder='Choose lie adjustment...' value={value} />
-                      </SelectTrigger>
-                      <SelectContent open={open}>
-                        {lieAdjustments.map((lie) => (
-                          <SelectItem key={lie} value={lie} selected={value === lie} onValueChange={onValueChange}>
-                            {lie}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </>
-                  )}
-                </SelectRoot>
-              </div>
-            )}
-
-            {/* Shaft Length Selection */}
-            {selectedBrand && (!brandRequiresMaterial(selectedBrand) || selectedMaterial) && (
-              <div className='mb-6'>
-                <h2 className='mb-3 text-base font-bold text-foreground'>Select Shaft Length</h2>
-                <SelectRoot value={selectedLength} onValueChange={setSelectedLength}>
-                  {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-                    <>
-                      <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                        <SelectValue placeholder='Choose shaft length...' value={value} />
-                      </SelectTrigger>
-                      <SelectContent open={open}>
-                        {shaftLengths.map((length) => (
-                          <SelectItem
-                            key={length}
-                            value={length}
-                            selected={value === length}
-                            onValueChange={onValueChange}
-                          >
-                            <div className='flex items-center justify-between w-full'>
-                              <span>{length}</span>
-                              {length === 'Standard' && <Check className='h-4 w-4 text-black' />}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </>
-                  )}
-                </SelectRoot>
-              </div>
-            )}
-          </>
-        )}
+        {currentStep === 1 && <ShaftPicker />}
 
         {currentStep === 2 && (
           <>
@@ -746,9 +464,7 @@ export function GolfConfigurator() {
                 <div>
                   <span className='text-sm text-muted-foreground'>Shaft</span>
                   <p className='font-medium text-base'>
-                    {selectedBrand && selectedFlex && selectedLie && selectedLength
-                      ? `${selectedBrand}, ${selectedFlex}, ${selectedLie}, ${selectedLength}`
-                      : 'Not configured'}
+                    Custom shaft configuration
                   </p>
                 </div>
                 <Button
@@ -789,7 +505,7 @@ export function GolfConfigurator() {
           className={cn(
             'mb-4 w-full h-12 text-base font-medium rounded-full transition-all duration-200',
             (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) ||
-              (currentStep === 1 && selectedBrand && selectedFlex && selectedLie && selectedLength) ||
+              (currentStep === 1) ||
               (currentStep === 2 && selectedGripBrand && selectedGripSize) ||
               currentStep === 3
               ? 'bg-black hover:bg-black/90 text-white'
@@ -798,9 +514,6 @@ export function GolfConfigurator() {
           onClick={handleNext}
           disabled={
             (currentStep === 0 && (!selectedHand.value || selectedClubs.value.length < 5)) ||
-            (currentStep === 1 && (!selectedBrand || 
-              (brandRequiresMaterial(selectedBrand) && !selectedMaterial) || 
-              !selectedFlex || !selectedLie || !selectedLength)) ||
             (currentStep === 2 && (!selectedGripBrand || !selectedGripSize))
           }
         >
