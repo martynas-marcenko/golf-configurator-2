@@ -1,0 +1,254 @@
+{
+  "products": {
+    "ironSets": {
+      "4PW": {
+        "id": "15226681065796",
+        "title": "Origin Combo Length Chrome",
+        "handle": "origin-combo-length-chrome",
+        "variants": [
+          {
+            "id": "55435517559108",
+            "title": "4-PW",
+            "price": 123900,
+            "available": true,
+            "inventory_quantity": 10,
+            "option1": "4-PW"
+          }
+        ],
+        "setSize": "4PW",
+        "clubCount": 7,
+        "priceInPounds": "£1,239.00"
+      },
+      "5PW": {
+        "id": "15226681065796",
+        "title": "Origin Combo Length Chrome",
+        "handle": "origin-combo-length-chrome",
+        "variants": [
+          {
+            "id": "55435517591876",
+            "title": "5-PW",
+            "price": 106200,
+            "available": true,
+            "inventory_quantity": 15,
+            "option1": "5-PW"
+          }
+        ],
+        "setSize": "5PW",
+        "clubCount": 6,
+        "priceInPounds": "£1,062.00"
+      },
+      "6PW": {
+        "id": "15226681065796",
+        "title": "Origin Combo Length Chrome",
+        "handle": "origin-combo-length-chrome",
+        "variants": [
+          {
+            "id": "55435517624644",
+            "title": "6-PW",
+            "price": 88500,
+            "available": true,
+            "inventory_quantity": 20,
+            "option1": "6-PW"
+          }
+        ],
+        "setSize": "6PW",
+        "clubCount": 5,
+        "priceInPounds": "£885.00"
+      }
+    },
+    "shafts": {
+      "KBS Tour Lite": [
+        {
+          "id": "55509863334212",
+          "title": "Regular",
+          "price": 15000,
+          "available": true,
+          "option1": "Regular",
+          "product": {
+            "title": "KBS Tour Lite Steel Shaft",
+            "handle": "kbs-tour-lite-steel"
+          },
+          "displayName": "KBS Tour Lite Steel Shaft Regular",
+          "pricePerClub": 15000,
+          "quantityAvailable": 50
+        },
+        {
+          "id": "55509863366980",
+          "title": "Stiff",
+          "price": 15400,
+          "available": true,
+          "option1": "Stiff",
+          "product": {
+            "title": "KBS Tour Lite Steel Shaft",
+            "handle": "kbs-tour-lite-steel"
+          },
+          "displayName": "KBS Tour Lite Steel Shaft Stiff",
+          "pricePerClub": 15400,
+          "quantityAvailable": 45
+        },
+        {
+          "id": "55509863399748",
+          "title": "Extra Stiff",
+          "price": 16000,
+          "available": true,
+          "option1": "Extra Stiff",
+          "product": {
+            "title": "KBS Tour Lite Steel Shaft",
+            "handle": "kbs-tour-lite-steel"
+          },
+          "displayName": "KBS Tour Lite Steel Shaft Extra Stiff",
+          "pricePerClub": 16000,
+          "quantityAvailable": 30
+        }
+      ],
+      "KBS Tour Matte Black": [
+        {
+          "id": "55509903835460",
+          "title": "Regular",
+          "price": 15000,
+          "available": true,
+          "option1": "Regular",
+          "product": {
+            "title": "KBS Tour Matte Black Steel Shaft",
+            "handle": "kbs-tour-matte-black"
+          },
+          "displayName": "KBS Tour Matte Black Steel Shaft Regular",
+          "pricePerClub": 15000,
+          "quantityAvailable": 40
+        },
+        {
+          "id": "55509903868228",
+          "title": "Stiff",
+          "price": 15400,
+          "available": true,
+          "option1": "Stiff",
+          "product": {
+            "title": "KBS Tour Matte Black Steel Shaft",
+            "handle": "kbs-tour-matte-black"
+          },
+          "displayName": "KBS Tour Matte Black Steel Shaft Stiff",
+          "pricePerClub": 15400,
+          "quantityAvailable": 35
+        },
+        {
+          "id": "55509903900996",
+          "title": "Extra Stiff",
+          "price": 16000,
+          "available": true,
+          "option1": "Extra Stiff",
+          "product": {
+            "title": "KBS Tour Matte Black Steel Shaft",
+            "handle": "kbs-tour-matte-black"
+          },
+          "displayName": "KBS Tour Matte Black Steel Shaft Extra Stiff",
+          "pricePerClub": 16000,
+          "quantityAvailable": 25
+        }
+      ],
+      "Fujikura Axiom": [
+        {
+          "id": "55509904818500",
+          "title": "Regular",
+          "price": 15000,
+          "available": true,
+          "option1": "Regular",
+          "product": {
+            "title": "Fujikura Axiom Graphite Shaft",
+            "handle": "fujikura-axiom-graphite"
+          },
+          "displayName": "Fujikura Axiom Graphite Shaft Regular",
+          "pricePerClub": 15000,
+          "quantityAvailable": 30
+        },
+        {
+          "id": "55509904851268",
+          "title": "Stiff",
+          "price": 15400,
+          "available": true,
+          "option1": "Stiff",
+          "product": {
+            "title": "Fujikura Axiom Graphite Shaft",
+            "handle": "fujikura-axiom-graphite"
+          },
+          "displayName": "Fujikura Axiom Graphite Shaft Stiff",
+          "pricePerClub": 15400,
+          "quantityAvailable": 25
+        },
+        {
+          "id": "55509904884036",
+          "title": "Extra Stiff",
+          "price": 16000,
+          "available": true,
+          "option1": "Extra Stiff",
+          "product": {
+            "title": "Fujikura Axiom Graphite Shaft",
+            "handle": "fujikura-axiom-graphite"
+          },
+          "displayName": "Fujikura Axiom Graphite Shaft Extra Stiff",
+          "pricePerClub": 16000,
+          "quantityAvailable": 20
+        }
+      ],
+      "UST Mamiya": [
+        {
+          "id": "55509905867076",
+          "title": "Regular",
+          "price": 15000,
+          "available": true,
+          "option1": "Regular",
+          "product": {
+            "title": "UST Mamiya Graphite Shaft",
+            "handle": "ust-mamiya-graphite"
+          },
+          "displayName": "UST Mamiya Graphite Shaft Regular",
+          "pricePerClub": 15000,
+          "quantityAvailable": 35
+        },
+        {
+          "id": "55509905899844",
+          "title": "Stiff",
+          "price": 15400,
+          "available": true,
+          "option1": "Stiff",
+          "product": {
+            "title": "UST Mamiya Graphite Shaft",
+            "handle": "ust-mamiya-graphite"
+          },
+          "displayName": "UST Mamiya Graphite Shaft Stiff",
+          "pricePerClub": 15400,
+          "quantityAvailable": 30
+        },
+        {
+          "id": "55509905932612",
+          "title": "Extra Stiff",
+          "price": 16000,
+          "available": true,
+          "option1": "Extra Stiff",
+          "product": {
+            "title": "UST Mamiya Graphite Shaft",
+            "handle": "ust-mamiya-graphite"
+          },
+          "displayName": "UST Mamiya Graphite Shaft Extra Stiff",
+          "pricePerClub": 16000,
+          "quantityAvailable": 20
+        }
+      ]
+    }
+  },
+  "cart": {
+    "addEndpoint": "/cart/add.js",
+    "mockResponses": {
+      "success": {
+        "items": [],
+        "item_count": 0,
+        "total_price": 0,
+        "currency": "GBP"
+      },
+      "error": {
+        "status": 422,
+        "message": "Cart could not be updated",
+        "description": "The cart cannot exceed 100 total items."
+      }
+    }
+  }
+}

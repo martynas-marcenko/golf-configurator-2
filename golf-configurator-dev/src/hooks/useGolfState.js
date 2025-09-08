@@ -1,12 +1,10 @@
 import { signal, computed } from '@preact/signals';
-import { ProductService } from '../services/ProductService.js';
-import { ShaftService } from '../services/ShaftService.js';
-import { MockProductService } from '../services/MockProductService.js';
-import { MockShaftService } from '../services/MockShaftService.js';
+import * as productService from '../services/ProductService.js';
+import * as shaftService from '../services/ShaftService.js';
 import { PriceFormatter } from '../utils/formatters.js';
 
 // Data source configuration - set to true to use real Shopify data locally
-const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
+export const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
 
 // FORCE RELOAD TEST - This should show up in console
 console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOString());
@@ -16,7 +14,7 @@ const isDevelopment = import.meta.env.DEV;
 
 /**
  * Golf configurator state management using Preact signals
- * Mirrors the exact functionality from golf-configurator-simple.js
+ * Modern functional architecture with centralized mock data
  */
 
 // Core state signals
@@ -32,18 +30,12 @@ export const selectedShafts = signal({});
 export const isLoading = signal(false);
 export const error = signal(null);
 
-// Service instances - use real data if USE_REAL_DATA is true OR in production
-const useRealData = USE_REAL_DATA || !isDevelopment;
-
 // DEBUG: Log service configuration immediately
 console.log('🔧 SERVICE CONFIG DEBUG:');
 console.log('   USE_REAL_DATA:', USE_REAL_DATA);
 console.log('   isDevelopment:', isDevelopment);
-console.log('   useRealData:', useRealData);
-console.log('   Will use:', useRealData ? 'ProductService (REAL)' : 'MockProductService (MOCK)');
+console.log('   Data source:', USE_REAL_DATA ? 'Real Shopify API' : 'Mock JSON data');
 
-export const productService = useRealData ? new ProductService() : new MockProductService();
-export const shaftService = useRealData ? new ShaftService() : new MockShaftService();
 export const priceFormatter = new PriceFormatter();
 
 // Available options
@@ -126,11 +118,13 @@ export const actions = {
   toggleClub(club) {
     const currentlySelected = selectedClubs.value;
     const isSelected = currentlySelected.some((c) => c.id === club.id);
-    
+
     console.log(`🏌️ USER SELECTION: Club toggle attempted`);
     console.log(`   🏏 Club: ${club.name} (${club.id})`);
-    console.log(`   📊 Current selection: [${currentlySelected.map(c => c.id).join(', ')}] (${currentlySelected.length} clubs)`);
-    console.log(`   📋 Available clubs: [${availableClubs.value.map(c => c.id).join(', ')}]`);
+    console.log(
+      `   📊 Current selection: [${currentlySelected.map((c) => c.id).join(', ')}] (${currentlySelected.length} clubs)`
+    );
+    console.log(`   📋 Available clubs: [${availableClubs.value.map((c) => c.id).join(', ')}]`);
     console.log(`   🎯 Action: ${isSelected ? 'Remove' : 'Add'} club`);
 
     if (isSelected) {
@@ -144,11 +138,19 @@ export const actions = {
 
       selectedClubs.value = currentlySelected.filter((c) => c.id !== club.id);
       console.log(`➖ SELECTION APPLIED: Removed club "${club.name}"`);
-      console.log(`   📊 New selection: [${selectedClubs.value.map(c => c.id).join(', ')}] (${selectedClubs.value.length} clubs)`);
+      console.log(
+        `   📊 New selection: [${selectedClubs.value.map((c) => c.id).join(', ')}] (${
+          selectedClubs.value.length
+        } clubs)`
+      );
     } else {
       selectedClubs.value = [...currentlySelected, club];
       console.log(`➕ SELECTION APPLIED: Added club "${club.name}"`);
-      console.log(`   📊 New selection: [${selectedClubs.value.map(c => c.id).join(', ')}] (${selectedClubs.value.length} clubs)`);
+      console.log(
+        `   📊 New selection: [${selectedClubs.value.map((c) => c.id).join(', ')}] (${
+          selectedClubs.value.length
+        } clubs)`
+      );
     }
 
     // Log the computed iron set type
@@ -162,12 +164,12 @@ export const actions = {
     console.log(`   🔧 Previous shaft: ${selectedShafts.value[clubId] || 'None'}`);
     console.log(`   🔧 Selected shaft ID: ${shaftId}`);
     console.log(`   📊 Current shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs have shafts');
-    
+
     selectedShafts.value = {
       ...selectedShafts.value,
       [clubId]: shaftId,
     };
-    
+
     console.log(`✅ SELECTION APPLIED: Shaft set for club ${clubId}`);
     console.log(`   📊 Updated shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs now have shafts');
   },
@@ -179,11 +181,15 @@ export const actions = {
     error.value = null;
 
     try {
-      const options = await shaftService.loadShaftDataForBrand(brandName);
+      const options = await shaftService.loadShaftOptions(brandName);
       console.log(`✅ OPTIONS LOADED: ${options.length} shaft options available for "${brandName}"`);
       console.group('📋 Shaft Options Summary:');
       options.forEach((option, i) => {
-        console.log(`${i + 1}. ${option.title} - £${(option.price / 100).toFixed(2)} (${option.available ? 'Available' : 'Out of Stock'})`);
+        console.log(
+          `${i + 1}. ${option.title} - £${(option.price / 100).toFixed(2)} (${
+            option.available ? 'Available' : 'Out of Stock'
+          })`
+        );
       });
       console.groupEnd();
       return options;
@@ -214,7 +220,8 @@ export const actions = {
     try {
       // Get the iron variant based on computed iron set type
       const setType = ironSetType.value;
-      const productInfo = productService.clubHeadProducts[setType];
+      const cachedProducts = productService.getCachedProducts();
+      const productInfo = cachedProducts[setType];
       if (!productInfo) {
         throw new Error('Product information not available!');
       }
@@ -352,15 +359,23 @@ if (typeof window !== 'undefined') {
   console.log('🏌️ Golf Configurator State initialized with Preact signals');
   console.log('🔧 DATA SOURCE:', USE_REAL_DATA ? 'Real Shopify Data' : 'Mock Data');
   console.log('🌍 ENVIRONMENT:', isDevelopment ? 'Development' : 'Production');
-  
+
   console.group('📊 INITIAL STATE SUMMARY:');
-  console.log('👈👉 Hand options:', handOptions.value.map(h => h.name).join(', '));
-  console.log('🏏 Available clubs:', availableClubs.value.map(c => `${c.name} (${c.isRequired ? 'Required' : 'Optional'})`));
-  console.log('🎯 Default selection:', selectedClubs.value.map(c => c.name).join(', '));
-  console.log('💰 Iron set prices:', Object.entries(ironSetPrices).map(([clubs, price]) => `${clubs} clubs: £${(price/100).toFixed(2)}`).join(', '));
-  console.log('🔧 Available shaft brands:', (useRealData ? shaftService.getAvailableBrands() : ['Mock brands']).join(', '));
+  console.log('👈👉 Hand options:', handOptions.value.map((h) => h.name).join(', '));
+  console.log(
+    '🏏 Available clubs:',
+    availableClubs.value.map((c) => `${c.name} (${c.isRequired ? 'Required' : 'Optional'})`)
+  );
+  console.log('🎯 Default selection:', selectedClubs.value.map((c) => c.name).join(', '));
+  console.log(
+    '💰 Iron set prices:',
+    Object.entries(ironSetPrices)
+      .map(([clubs, price]) => `${clubs} clubs: £${(price / 100).toFixed(2)}`)
+      .join(', ')
+  );
+  console.log('🔧 Available shaft brands:', shaftService.getAvailableBrands().join(', '));
   console.groupEnd();
-  
+
   console.log('🐛 Debug: window.golfConfiguratorState available');
   console.log('🐛 Debug: Access current state via window.golfConfiguratorState');
 }

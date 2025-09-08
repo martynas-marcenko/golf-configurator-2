@@ -1,7 +1,8 @@
 import { useState } from 'preact/hooks';
 import { Check } from 'lucide-react';
 import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
-import { selectedClubs, selectedShafts, actions, shaftService } from '../hooks/useGolfState';
+import { selectedClubs, selectedShafts, actions } from '../hooks/useGolfState';
+import * as shaftService from '../services/ShaftService';
 import { cn } from '../lib/utils';
 
 export function ShaftPicker() {

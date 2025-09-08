@@ -13,8 +13,8 @@ import {
   actions,
   error,
   isLoading,
-  productService,
 } from '../hooks/useGolfState';
+import * as productService from '../services/ProductService';
 import { cn } from '../lib/utils';
 
 const steps = [
