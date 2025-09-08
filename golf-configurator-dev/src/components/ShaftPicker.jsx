@@ -1,35 +1,69 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { Check } from 'lucide-react';
 import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
-import { selectedClubs, selectedShafts, actions } from '../hooks/useGolfState';
+import { actions } from '../hooks/useGolfState';
 import * as shaftService from '../services/ShaftService';
 import { cn } from '../lib/utils';
 
 export function ShaftPicker() {
   // State for shaft configuration
   const [selectedBrand, setSelectedBrand] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState('');
   const [selectedFlex, setSelectedFlex] = useState('');
   const [selectedLie, setSelectedLie] = useState('Standard');
   const [selectedLength, setSelectedLength] = useState('Standard');
-  
+
   // State for real Shopify data
   const [shaftOptions, setShaftOptions] = useState([]);
   const [loadingShafts, setLoadingShafts] = useState(false);
+  const [availableBrands, setAvailableBrands] = useState([]);
+  const [loadingBrands, setLoadingBrands] = useState(true);
 
   console.log('🎯 UI DEBUG: ShaftPicker component rendered');
   console.log('🎯 UI DEBUG: Current selectedBrand state:', selectedBrand);
   console.log('🎯 UI DEBUG: Current shaftOptions length:', shaftOptions.length);
   console.log('🎯 UI DEBUG: Loading state:', loadingShafts);
 
-  const availableBrands = shaftService.getAvailableBrands();
-  console.log('🎯 UI DEBUG: Available brands from service:', availableBrands);
+  // Load available brands on mount
+  useEffect(() => {
+    const loadBrands = async () => {
+      console.log('🎯 UI DEBUG: Loading available brands...');
+      setLoadingBrands(true);
+      try {
+        const brands = await shaftService.getAvailableBrands();
+        console.log('🎯 UI DEBUG: Received brands:', brands);
+        setAvailableBrands(brands);
+      } catch (error) {
+        console.error('🎯 UI DEBUG: Error loading brands:', error);
+        setAvailableBrands([]);
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    loadBrands();
+  }, []);
+
+  console.log('🎯 UI DEBUG: Available brands state:', availableBrands);
 
   // Shaft lengths and lie adjustments (same as GolfConfigurator)
   const shaftLengths = [
-    '-2"', '-1.75"', '-1.5"', '-1.25"', '-1"', '-0.75"', '-0.5"', '-0.25"',
+    '-2"',
+    '-1.75"',
+    '-1.5"',
+    '-1.25"',
+    '-1"',
+    '-0.75"',
+    '-0.5"',
+    '-0.25"',
     'Standard',
-    '+0.25"', '+0.5"', '+0.75"', '+1"', '+1.25"', '+1.5"', '+1.75"', '+2"',
+    '+0.25"',
+    '+0.5"',
+    '+0.75"',
+    '+1"',
+    '+1.25"',
+    '+1.5"',
+    '+1.75"',
+    '+2"',
   ];
 
   const lieAdjustments = ['2.0 Deg Up', '1.0 Deg Up', 'Standard', '1.0 Deg Flat', '2.0 Deg Flat'];
@@ -37,13 +71,12 @@ export function ShaftPicker() {
   const handleBrandChange = async (brand) => {
     console.log('🎯 UI DEBUG: handleBrandChange called with brand:', brand);
     console.log('🎯 UI DEBUG: Previous selectedBrand was:', selectedBrand);
-    
+
     setSelectedBrand(brand);
-    setSelectedMaterial(''); // Reset material when brand changes
     setSelectedFlex(''); // Reset flex when brand changes
     setSelectedLie('Standard');
     console.log('🎯 UI DEBUG: setSelectedBrand called with:', brand);
-    
+
     if (!brand) {
       console.log('🎯 UI DEBUG: No brand selected, clearing shaft options');
       setShaftOptions([]);
@@ -67,41 +100,19 @@ export function ShaftPicker() {
     }
   };
 
-  // Helper functions for shaft configuration
-  const brandRequiresMaterial = (brand) => {
-    // Only KBS Tour Lite has both Steel and Graphite options in real Shopify data
-    // We'll determine this from the fetched options
-    return false; // For now, since we're using real Shopify data structure
-  };
-
   // Get available flex options from real Shopify data
   const getFlexOptions = () => {
     if (!shaftOptions.length) return [];
-    
-    // Group options by flex type (extracted from title)
-    const flexMap = {};
-    shaftOptions.forEach(option => {
-      const title = option.title || '';
-      let flex = 'Regular'; // default
-      
-      if (title.toLowerCase().includes('stiff') && !title.toLowerCase().includes('extra')) {
-        flex = 'Stiff';
-      } else if (title.toLowerCase().includes('extra stiff') || title.toLowerCase().includes('x-stiff')) {
-        flex = 'Extra Stiff';
-      } else if (title.toLowerCase().includes('regular')) {
-        flex = 'Regular';
-      }
-      
-      if (!flexMap[flex]) {
-        flexMap[flex] = {
-          flex: flex,
-          price: option.price || 0,
-          option: option
-        };
-      }
-    });
-    
-    return Object.values(flexMap);
+
+    // Each shaftOption is a Shopify variant representing a different flex
+    // Use the variant title directly as the flex type and include all variant data
+    return shaftOptions.map((option) => ({
+      flex: option.title, // The variant title IS the flex type (Regular, Stiff, Extra Stiff)
+      price: option.price || 0,
+      option: option, // Keep the full variant data for cart operations
+      variantId: option.id,
+      available: option.available,
+    }));
   };
 
   return (
@@ -109,30 +120,50 @@ export function ShaftPicker() {
       {/* Brand Selection */}
       <div className='mb-6'>
         <h2 className='mb-3 text-base font-bold text-foreground'>Select Shaft Brand</h2>
-        <SelectRoot
-          value={selectedBrand}
-          onValueChange={(value) => {
-            console.log('🎯 UI DEBUG: Brand SelectRoot onValueChange called with:', value);
-            handleBrandChange(value);
-          }}
-        >
-          {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-            <>
-              <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                <SelectValue placeholder='Choose a brand...' value={value} />
-              </SelectTrigger>
-              <SelectContent open={open}>
-                {availableBrands.map((brand) => (
-                  <SelectItem key={brand} value={brand} selected={value === brand} onValueChange={onValueChange}>
-                    <span className='font-medium'>{brand}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </>
-          )}
-        </SelectRoot>
-        
-        {/* Loading indicator */}
+
+        {loadingBrands ? (
+          <div className='flex items-center justify-center p-4 border rounded-lg'>
+            <div className='animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2'></div>
+            Loading available brands...
+          </div>
+        ) : availableBrands.length === 0 ? (
+          <div className='p-4 border border-yellow-200 bg-yellow-50 rounded-lg'>
+            <div className='flex items-center text-yellow-800'>
+              <span className='text-xl mr-2'>⚠️</span>
+              <div>
+                <div className='font-medium'>No brands available</div>
+                <div className='text-sm'>
+                  No shaft products configured in theme settings. Please configure shaft products in the theme editor.
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <SelectRoot
+            value={selectedBrand}
+            onValueChange={(value) => {
+              console.log('🎯 UI DEBUG: Brand SelectRoot onValueChange called with:', value);
+              handleBrandChange(value);
+            }}
+          >
+            {({ value, open, setOpen, onValueChange, onKeyDown }) => (
+              <>
+                <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
+                  <SelectValue placeholder='Choose a brand...' value={value} />
+                </SelectTrigger>
+                <SelectContent open={open}>
+                  {availableBrands.map((brand) => (
+                    <SelectItem key={brand} value={brand} selected={value === brand} onValueChange={onValueChange}>
+                      <span className='font-medium'>{brand}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </>
+            )}
+          </SelectRoot>
+        )}
+
+        {/* Loading indicator for shaft options */}
         {loadingShafts && (
           <div className='mt-3 flex items-center text-sm text-muted-foreground'>
             <div className='animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2'></div>
@@ -165,9 +196,7 @@ export function ShaftPicker() {
                 <span
                   className={cn(
                     'transition-colors duration-200 mb-1',
-                    selectedFlex === option.flex
-                      ? 'text-black'
-                      : 'text-card-foreground group-hover:text-foreground'
+                    selectedFlex === option.flex ? 'text-black' : 'text-card-foreground group-hover:text-foreground'
                   )}
                 >
                   {option.flex}
@@ -237,12 +266,7 @@ export function ShaftPicker() {
                 </SelectTrigger>
                 <SelectContent open={open}>
                   {shaftLengths.map((length) => (
-                    <SelectItem
-                      key={length}
-                      value={length}
-                      selected={value === length}
-                      onValueChange={onValueChange}
-                    >
+                    <SelectItem key={length} value={length} selected={value === length} onValueChange={onValueChange}>
                       <div className='flex items-center justify-between w-full'>
                         <span>{length}</span>
                         {length === 'Standard' && <Check className='h-4 w-4 text-black' />}

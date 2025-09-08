@@ -17,15 +17,18 @@ const isDevelopment = import.meta.env.DEV;
  * Modern functional architecture with centralized mock data
  */
 
-// Core state signals
-export const selectedHand = signal(null);
-export const selectedClubs = signal([
+// Default club selection (reusable)
+const DEFAULT_CLUBS = [
   { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: '9', name: '9-Iron', type: 'iron', isRequired: true, isOptional: false },
   { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
-]); // Start with only required clubs (6-PW) pre-selected
+];
+
+// Core state signals
+export const selectedHand = signal(null);
+export const selectedClubs = signal([...DEFAULT_CLUBS]); // Start with default clubs
 export const selectedShafts = signal({});
 export const selectedGrip = signal(null); // { brand: string, size: string }
 export const selectedLength = signal('Standard'); // Default length
@@ -66,30 +69,20 @@ export const availableClubs = signal([
   { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
 ]);
 
-// Default club selections based on set size (like vanilla)
 export const defaultClubSelections = {
   '4PW': ['4', '5', '6', '7', '8', '9', 'PW'], // 7 clubs
   '5PW': ['5', '6', '7', '8', '9', 'PW'], // 6 clubs
   '6PW': ['6', '7', '8', '9', 'PW'], // 5 clubs (minimum)
 };
 
-// Computed values
-export const currentClubs = computed(() => {
-  return availableClubs.value;
-});
-
 export const selectedClubsCount = computed(() => selectedClubs.value.length);
 
-// Iron set pricing based on club count
-export const ironSetPrices = {
-  7: 123900, // 4-PW: £1,239.00 in pence
-  6: 106200, // 5-PW: £1,062.00 in pence
-  5: 88500, // 6-PW: £885.00 in pence
-};
-
 export const basePrice = computed(() => {
-  const clubCount = selectedClubs.value.length;
-  return ironSetPrices[clubCount] || ironSetPrices[5]; // Default to 5-club price
+  if (!selectedHand.value) return 0;
+
+  const setType = ironSetType.value;
+  const ironVariant = productService.findVariantBySetSize(setType);
+  return ironVariant ? ironVariant.price : 0;
 });
 
 export const totalPrice = computed(() => {
@@ -102,24 +95,14 @@ export const formattedTotalPrice = computed(() => {
 });
 
 export const canAddToCart = computed(() => {
-  return selectedHand.value && 
-         selectedClubs.value.length >= 5 && 
-         selectedGrip.value?.brand && 
-         selectedGrip.value?.size; // Require hand, clubs, and grip selections
+  return selectedHand.value && selectedClubs.value.length >= 5 && selectedGrip.value?.brand && selectedGrip.value?.size; // Require hand, clubs, and grip selections
 });
 
-// Actions matching vanilla JS functionality
 export const actions = {
   setHand(hand) {
-    console.log(`🤝 USER SELECTION: Hand preference changed`);
-    console.log(`   👈👉 Previous: ${selectedHand.value || 'None'}`);
-    console.log(`   👈👉 Selected: ${hand}`);
-    console.log(`   📊 Available options: ['left', 'right']`);
+    console.log(`🤝 Hand changed: ${selectedHand.value || 'None'} → ${hand}`);
     selectedHand.value = hand;
-    console.log(`✅ SELECTION APPLIED: Hand set to "${hand}"`);
   },
-
-  // Removed setSetSize - clubs are managed directly through toggleClub
 
   toggleClub(club) {
     const currentlySelected = selectedClubs.value;
@@ -182,7 +165,9 @@ export const actions = {
 
   setGrip(brand, size) {
     console.log(`🤲 USER SELECTION: Grip selection changed`);
-    console.log(`   🔧 Previous grip: ${selectedGrip.value ? `${selectedGrip.value.brand} ${selectedGrip.value.size}` : 'None'}`);
+    console.log(
+      `   🔧 Previous grip: ${selectedGrip.value ? `${selectedGrip.value.brand} ${selectedGrip.value.size}` : 'None'}`
+    );
     console.log(`   🔧 Selected grip: ${brand} ${size}`);
     selectedGrip.value = { brand, size };
     console.log(`✅ SELECTION APPLIED: Grip set to "${brand} ${size}"`);
@@ -202,7 +187,8 @@ export const actions = {
 
   async loadShaftOptions(brandName) {
     console.log(`🚀 API REQUEST: Loading shaft options for brand "${brandName}"`);
-    console.log(`   📊 Available brands: ${shaftService.getAvailableBrands().join(', ')}`);
+    const availableBrands = await shaftService.getAvailableBrands();
+    console.log(`   📊 Available brands: ${availableBrands.join(', ')}`);
     isLoading.value = true;
     error.value = null;
 
@@ -253,10 +239,14 @@ export const actions = {
       const productInfo = cachedProducts[setType];
       console.log('🏌️ DEBUG: Product info for', setType, ':', productInfo);
       if (!productInfo) {
-        throw new Error(`Product information not available for set type "${setType}"! Available: ${Object.keys(cachedProducts).join(', ')}`);
+        throw new Error(
+          `Product information not available for set type "${setType}"! Available: ${Object.keys(cachedProducts).join(
+            ', '
+          )}`
+        );
       }
 
-      const ironVariant = productService.findVariantBySetSize(setType, selectedHand.value);
+      const ironVariant = productService.findVariantBySetSize(setType);
       if (!ironVariant) {
         throw new Error('Iron variant not found for selected configuration!');
       }
@@ -365,14 +355,7 @@ export const actions = {
   reset() {
     console.log('🔄 Resetting configurator state');
     selectedHand.value = null;
-    // Reset to default clubs pre-selected (only required clubs)
-    selectedClubs.value = [
-      { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
-      { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
-      { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
-      { id: '9', name: '9-Iron', type: 'iron', isRequired: true, isOptional: false },
-      { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
-    ];
+    selectedClubs.value = [...DEFAULT_CLUBS];
     selectedShafts.value = {};
     selectedGrip.value = null;
     selectedLength.value = 'Standard';
@@ -409,13 +392,10 @@ if (typeof window !== 'undefined') {
     availableClubs.value.map((c) => `${c.name} (${c.isRequired ? 'Required' : 'Optional'})`)
   );
   console.log('🎯 Default selection:', selectedClubs.value.map((c) => c.name).join(', '));
-  console.log(
-    '💰 Iron set prices:',
-    Object.entries(ironSetPrices)
-      .map(([clubs, price]) => `${clubs} clubs: £${(price / 100).toFixed(2)}`)
-      .join(', ')
-  );
-  console.log('🔧 Available shaft brands:', shaftService.getAvailableBrands().join(', '));
+  console.log('💰 Iron set prices: Available from product service (real Shopify data)');
+  shaftService.getAvailableBrands().then(brands => {
+    console.log('🔧 Available shaft brands:', brands.join(', '));
+  });
   console.groupEnd();
 
   console.log('🐛 Debug: window.golfConfiguratorState available');

@@ -9,10 +9,8 @@ import {
   selectedHand,
   selectedClubs,
   selectedGrip,
-  selectedLength,
-  selectedLie,
   handOptions,
-  currentClubs,
+  availableClubs,
   canAddToCart,
   actions,
   error,
@@ -47,6 +45,12 @@ export function GolfConfigurator() {
   const [currentStep, setCurrentStep] = useState(0);
 
   // Helper functions
+  const findClub = (clubNumber) => {
+    return availableClubs.value.find(
+      (c) => c.name.includes(clubNumber) || (clubNumber === 'P' && c.name.includes('PW'))
+    );
+  };
+
   const isClubSelected = (clubNumber) => {
     return selectedClubs.value.some(
       (club) => club.name.includes(clubNumber) || (clubNumber === 'P' && club.name.includes('PW'))
@@ -64,10 +68,7 @@ export function GolfConfigurator() {
       return;
     }
 
-    const club = currentClubs.value.find(
-      (c) => c.name.includes(ironNumber) || (ironNumber === 'P' && c.name.includes('PW'))
-    );
-    
+    const club = findClub(ironNumber);
     if (!club) return;
 
     const isCurrentlySelected = isClubSelected(ironNumber);
@@ -75,7 +76,7 @@ export function GolfConfigurator() {
     if (ironNumber === '4') {
       if (!isCurrentlySelected) {
         // Selecting 4: must also select 5
-        const club5 = currentClubs.value.find(c => c.name.includes('5'));
+        const club5 = findClub('5');
         if (club5 && !isClubSelected('5')) {
           actions.toggleClub(club5);
         }
@@ -91,7 +92,7 @@ export function GolfConfigurator() {
       } else {
         // Deselecting 5: must also deselect 4 if it's selected
         if (isClubSelected('4')) {
-          const club4 = currentClubs.value.find(c => c.name.includes('4'));
+          const club4 = findClub('4');
           if (club4) {
             actions.toggleClub(club4);
           }
