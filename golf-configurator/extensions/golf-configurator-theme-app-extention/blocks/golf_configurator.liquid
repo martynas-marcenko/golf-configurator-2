@@ -1,5 +1,9 @@
 <!-- Golf Configurator App Container -->
-<div id="golf-configurator">
+<div 
+  id="golf-configurator"
+  data-bundle-parent-product='{{ block.settings.bundle_parent_product | json }}'
+  data-shaft-products='{{ block.settings.shaft_products | json }}'
+>
   <!-- The Preact app will be mounted here -->
   <div
     class="loading-state"
@@ -27,6 +31,19 @@
 {
   "name": "Golf Configurator 2",
   "target": "section",
-  "settings": []
+  "settings": [
+    {
+      "type": "product",
+      "id": "bundle_parent_product",
+      "label": "Bundle Parent Product",
+      "info": "Select the main iron set product that will be used as the bundle parent (e.g., origin-combo-length-chrome)"
+    },
+    {
+      "type": "product_list",
+      "id": "shaft_products",
+      "label": "Shaft Products",
+      "info": "Select the products that should be available as shaft options in the configurator"
+    }
+  ]
 }
 {% endschema %}

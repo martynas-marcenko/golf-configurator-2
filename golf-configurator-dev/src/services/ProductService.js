@@ -9,75 +9,118 @@ import mockData from '../mocks/shopify-data.json';
 // Cache for loaded product data
 let productCache = null;
 
-const PRODUCT_HANDLE = 'origin-combo-length-chrome';
+/**
+ * Get the bundle parent product handle from theme settings
+ */
+const getBundleParentProductHandle = () => {
+  const configuratorElement = document.getElementById('golf-configurator');
+
+  if (!configuratorElement) {
+    throw new Error('Golf configurator element not found - cannot read bundle parent product data');
+  }
+
+  const bundleParentProductData = configuratorElement.getAttribute('data-bundle-parent-product');
+
+  if (!bundleParentProductData) {
+    throw new Error(
+      'No bundle parent product data found in theme settings - please configure bundle parent product in theme editor'
+    );
+  }
+
+  try {
+    // Handle the case where the JSON string contains extra quotes
+    let cleanedData = bundleParentProductData;
+
+    // If it's a string wrapped in quotes, extract it
+    if (cleanedData.startsWith('"') && cleanedData.endsWith('"')) {
+      cleanedData = cleanedData.slice(1, -1);
+    }
+
+    // If it's just a string (product handle), use it directly
+    if (typeof cleanedData === 'string' && !cleanedData.startsWith('{')) {
+      return cleanedData;
+    }
+
+    const bundleParentProduct = JSON.parse(bundleParentProductData);
+
+    if (!bundleParentProduct?.handle) {
+      throw new Error('No bundle parent product selected in theme settings - please select a product in theme editor');
+    }
+
+    return bundleParentProduct.handle;
+  } catch (error) {
+    if (error.message.includes('theme settings')) {
+      throw error; // Re-throw our custom errors
+    }
+    throw new Error('Invalid bundle parent product data format in theme settings - please check theme configuration');
+  }
+};
 
 /**
  * Main function to fetch club head products
  * Uses real Shopify API or mock data based on USE_REAL_DATA flag
  */
-export async function fetchClubHeadProducts() {
-  if (USE_REAL_DATA) {
-    return fetchRealClubProducts();
-  } else {
-    return fetchMockClubProducts();
-  }
-}
+export const fetchClubHeadProducts = async () => {
+  return USE_REAL_DATA ? await fetchRealClubProducts() : await fetchMockClubProducts();
+};
 
 /**
  * Fetch real product data from Shopify API
  */
-async function fetchRealClubProducts() {
+const fetchRealClubProducts = async () => {
   try {
+    const productHandle = getBundleParentProductHandle();
     console.log('🏌️ API CALL: Fetching club head product from Shopify...');
-    console.log('🏌️ Product handle:', PRODUCT_HANDLE);
+    console.log('🏌️ Product handle:', productHandle);
 
-    const response = await fetch(`/products/${PRODUCT_HANDLE}.js`);
+    const response = await fetch(`/products/${productHandle}.js`);
 
-    if (response.ok) {
-      const product = await response.json();
-      console.log(`✅ FETCHED DATA: Product "${product.title}"`);
-      console.log('📊 AVAILABLE OPTIONS: Product has', product.variants.length, 'total variants');
-
-      // Log all available variants
-      console.group('📋 Available Variants:');
-      product.variants.forEach((variant, index) => {
-        console.log(`${index + 1}. ${variant.title} - £${(variant.price / 100).toFixed(2)} (ID: ${variant.id})`);
-      });
-      console.groupEnd();
-
-      productCache = product;
-      return product;
-    } else {
-      console.warn(`❌ API ERROR: Product handle '${PRODUCT_HANDLE}' returned ${response.status}`);
+    if (!response.ok) {
+      console.warn(`❌ API ERROR: Product handle '${productHandle}' returned ${response.status}`);
       return null;
     }
+
+    const product = await response.json();
+    console.log(`✅ FETCHED DATA: Product "${product.title}"`);
+    console.log('📊 AVAILABLE OPTIONS: Product has', product.variants.length, 'total variants');
+
+    // Log all available variants
+    console.group('📋 Available Variants:');
+    product.variants.forEach((variant, index) => {
+      const price = (variant.price / 100).toFixed(2);
+      console.log(`${index + 1}. ${variant.title} - £${price} (ID: ${variant.id})`);
+    });
+    console.groupEnd();
+
+    productCache = product;
+    return product;
   } catch (error) {
     console.error('Failed to fetch club head products:', error);
     return null;
   }
-}
+};
 
 /**
  * Fetch mock product data from centralized JSON file
  */
-async function fetchMockClubProducts() {
+const fetchMockClubProducts = async () => {
   console.log('🧪 MOCK: Loading club head products from mock data');
 
-  // Create a unified product from mock data
-  const mockVariants = [];
+  // Create a unified product from mock data using modern destructuring
+  const mockVariants = Object.entries(mockData.products.ironSets).map(([, mockProduct]) => {
+    const variant = mockProduct.variants[0];
+    const price = (variant.price / 100).toFixed(2);
+    console.log(`🧪 MOCK VARIANT: ${variant.title} - £${price}`);
+    return variant;
+  });
 
-  // Combine all mock iron sets into a single product with multiple variants
-  for (const [setSize, mockProduct] of Object.entries(mockData.products.ironSets)) {
-    mockVariants.push(mockProduct.variants[0]);
-    console.log(
-      `🧪 MOCK VARIANT: ${mockProduct.variants[0].title} - £${(mockProduct.variants[0].price / 100).toFixed(2)}`
-    );
-  }
+  const { ironSets } = mockData.products;
+  const baseProduct = ironSets['4PW'];
 
   const mockProduct = {
-    id: mockData.products.ironSets['4PW'].id,
-    title: mockData.products.ironSets['4PW'].title,
-    handle: mockData.products.ironSets['4PW'].handle,
+    id: baseProduct.id,
+    title: baseProduct.title,
+    handle: baseProduct.handle,
     variants: mockVariants,
   };
 
@@ -85,12 +128,12 @@ async function fetchMockClubProducts() {
   console.log('🧪 MOCK: Created unified product with', mockVariants.length, 'variants');
 
   return mockProduct;
-}
+};
 
 /**
  * Find variant by set size
  */
-export function findVariantBySetSize(setSize) {
+export const findVariantBySetSize = (setSize) => {
   if (!productCache) {
     console.warn('No product data loaded');
     return null;
@@ -98,36 +141,35 @@ export function findVariantBySetSize(setSize) {
 
   const normalizedSetSize = setSize.replace('-', ''); // Handle both "4PW" and "4-PW"
 
-  // Find variant by title matching set size
-  const variant = productCache.variants.find((v) => {
-    const variantTitle = v.title.replace('-', ''); // Normalize variant title too
+  // Find variant by title matching set size using modern find method
+  const variant = productCache.variants.find((variant) => {
+    const variantTitle = variant.title.replace('-', ''); // Normalize variant title too
     return variantTitle === normalizedSetSize;
   });
 
-  if (variant) {
-    return variant;
+  if (!variant) {
+    console.warn(`No variant found for setSize: ${setSize}`);
+    return null;
   }
 
-  console.warn(`No variant found for setSize: ${setSize}`);
-  return null;
-}
+  return variant;
+};
 
 /**
  * Get cached product data
  */
-export function getCachedProducts() {
+export const getCachedProducts = () => {
   // Return in the old format for backward compatibility
   if (!productCache) return null;
 
-  const foundProducts = {};
-  productCache.variants.forEach((variant) => {
+  // Using reduce for more functional approach
+  return productCache.variants.reduce((foundProducts, variant) => {
     const normalizedSetSize = variant.title.replace('-', '');
     foundProducts[normalizedSetSize] = {
       product: productCache,
-      variant: variant,
+      variant,
       setSize: normalizedSetSize,
     };
-  });
-
-  return foundProducts;
-}
+    return foundProducts;
+  }, {});
+};
