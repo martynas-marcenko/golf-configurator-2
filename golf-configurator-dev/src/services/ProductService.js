@@ -9,7 +9,6 @@ import { getBundleParentProductHandle } from '../utils/dataAttributes.js';
 
 // No caching - fetch fresh data from Shopify each time
 
-
 /**
  * Main function to fetch club head products
  * Uses real Shopify API or mock data based on USE_REAL_DATA flag
@@ -87,31 +86,28 @@ const fetchMockClubProducts = async () => {
  */
 export const findVariantBySetSize = async (setSize) => {
   const product = await fetchClubHeadProducts();
-  
+
   if (!product) {
     console.warn('No product data available from Shopify');
     return null;
   }
 
-  const normalizedSetSize = setSize.replace('-', ''); // Handle both "4PW" and "4-PW"
+  // Simple normalization: remove hyphens for matching
+  const normalizedSetSize = setSize.replace('-', '');
 
-  // Find variant by title matching set size using modern find method
-  let variant = product.variants.find((variant) => {
-    const variantTitle = variant.title.replace('-', ''); // Normalize variant title too
+  // Find variant by title matching set size
+  const variant = product.variants.find((variant) => {
+    const variantTitle = variant.title.replace('-', '');
     return variantTitle === normalizedSetSize;
   });
 
-  // For virtual/wrapper products with only "Default Title", use it for all set sizes
-  if (!variant && product.variants.length === 1 && product.variants[0].title === 'Default Title') {
-    console.log(`🔄 Using Default Title variant for virtual product (set size: ${setSize})`);
-    variant = product.variants[0];
-  }
-
   if (!variant) {
-    console.error(`❌ No variant found for setSize: ${setSize}. Available variants:`, product.variants.map(v => v.title));
+    console.error(
+      `❌ No variant found for setSize: ${setSize}. Available variants:`,
+      product.variants.map((v) => v.title)
+    );
     return null;
   }
 
   return variant;
 };
-
