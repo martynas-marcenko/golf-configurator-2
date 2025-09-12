@@ -5,14 +5,13 @@ import { PriceFormatter } from '../utils/formatters.js';
 import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
 
 // Data source configuration - set to true to use real Shopify data locally
-export const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
+export const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
 
 // FORCE RELOAD TEST - This should show up in console
 console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOString());
 
 // Detect development environment
 const isDevelopment = import.meta.env.DEV;
-
 
 /**
  * Golf configurator state management using Preact signals
@@ -32,8 +31,7 @@ const DEFAULT_CLUBS = [
 export const selectedHand = signal(null);
 export const selectedClubs = signal([...DEFAULT_CLUBS]); // Start with default clubs
 export const selectedShafts = signal({});
-export const selectedGrip = signal(null); // { brand: string, size: string }
-export const selectedLength = signal('Standard'); // Default length
+export const selectedGrip = signal(null); // { brand: string, model: string, size: string }
 export const selectedLie = signal('Standard'); // Default lie
 export const isLoading = signal(false);
 export const error = signal(null);
@@ -79,6 +77,11 @@ export const defaultClubSelections = {
 
 export const selectedClubsCount = computed(() => selectedClubs.value.length);
 
+export const selectedClubsDisplay = computed(() => {
+  const count = selectedClubs.value.length;
+  return `${count} ${count === 1 ? 'club' : 'clubs'}`;
+});
+
 // Base price will be calculated when needed (in add to cart)
 export const basePrice = computed(() => {
   // For now, return 0 - actual price will be fetched when adding to cart
@@ -95,7 +98,13 @@ export const formattedTotalPrice = computed(() => {
 });
 
 export const canAddToCart = computed(() => {
-  return selectedHand.value && selectedClubs.value.length >= 5 && selectedGrip.value?.brand && selectedGrip.value?.size; // Require hand, clubs, and grip selections
+  return (
+    selectedHand.value &&
+    selectedClubs.value.length >= 5 &&
+    selectedGrip.value?.brand &&
+    selectedGrip.value?.model &&
+    selectedGrip.value?.size
+  ); // Require hand, clubs, and complete grip selections
 });
 
 export const actions = {
@@ -163,20 +172,18 @@ export const actions = {
     console.log(`   📊 Updated shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs now have shafts');
   },
 
-  setGrip(brand, size) {
+  setGrip(brand, model, size) {
     console.log(`🤲 USER SELECTION: Grip selection changed`);
     console.log(
-      `   🔧 Previous grip: ${selectedGrip.value ? `${selectedGrip.value.brand} ${selectedGrip.value.size}` : 'None'}`
+      `   🔧 Previous grip: ${
+        selectedGrip.value
+          ? `${selectedGrip.value.brand} ${selectedGrip.value.model || ''} ${selectedGrip.value.size || ''}`
+          : 'None'
+      }`
     );
-    console.log(`   🔧 Selected grip: ${brand} ${size}`);
-    selectedGrip.value = { brand, size };
-    console.log(`✅ SELECTION APPLIED: Grip set to "${brand} ${size}"`);
-  },
-
-  setLength(length) {
-    console.log(`📏 USER SELECTION: Length changed from "${selectedLength.value}" to "${length}"`);
-    selectedLength.value = length;
-    console.log(`✅ SELECTION APPLIED: Length set to "${length}"`);
+    console.log(`   🔧 Selected grip: ${brand} ${model || ''} ${size || ''}`);
+    selectedGrip.value = { brand, model, size };
+    console.log(`✅ SELECTION APPLIED: Grip set to "${brand} ${model || ''} ${size || ''}"`);
   },
 
   setLie(lie) {
@@ -233,7 +240,7 @@ export const actions = {
       // Get the iron variant based on computed iron set type
       const setType = ironSetType.value;
       console.log('🏌️ DEBUG: Iron set type:', setType);
-      
+
       const ironVariant = await productService.findVariantBySetSize(setType);
       if (!ironVariant) {
         throw new Error('Iron variant not found for selected configuration!');
@@ -271,8 +278,6 @@ export const actions = {
             ...(selectedGrip.value && {
               grip: `${selectedGrip.value.brand} ${selectedGrip.value.size}`,
             }),
-            // Add length and lie adjustments
-            length: selectedLength.value,
             lie: selectedLie.value,
           },
         },
@@ -351,7 +356,6 @@ export const actions = {
     selectedClubs.value = [...DEFAULT_CLUBS];
     selectedShafts.value = {};
     selectedGrip.value = null;
-    selectedLength.value = 'Standard';
     selectedLie.value = 'Standard';
     error.value = null;
   },
@@ -365,7 +369,6 @@ if (typeof window !== 'undefined') {
     ironSetType,
     selectedShafts,
     selectedGrip,
-    selectedLength,
     selectedLie,
     canAddToCart,
     isLoading,

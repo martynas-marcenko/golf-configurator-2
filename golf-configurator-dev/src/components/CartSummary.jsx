@@ -2,6 +2,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import {
   selectedClubs,
+  selectedClubsDisplay,
   selectedShafts,
   selectedHand,
   ironSetType,
@@ -48,7 +49,7 @@ export function CartSummary() {
 
           <div className='flex justify-between'>
             <span>Clubs:</span>
-            <span className='font-medium'>{selectedClubs.value.length} selected</span>
+            <span className='font-medium'>{selectedClubsDisplay.value}</span>
           </div>
 
           {getShaftUpgradeCount() > 0 && (

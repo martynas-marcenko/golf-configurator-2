@@ -8,7 +8,9 @@ import { ShaftPicker } from './ShaftPicker';
 import {
   selectedHand,
   selectedClubs,
+  selectedShafts,
   selectedGrip,
+  selectedLie,
   handOptions,
   availableClubs,
   canAddToCart,
@@ -28,9 +30,28 @@ const steps = [
 
 const ironNumbers = ['4', '5', '6', '7', '8', '9', 'P'];
 
+const gripData = {
+  'Golf Pride': {
+    models: ['Tour Velvet', 'MCC', 'MCC Plus4'],
+    sizes: ['Standard', 'Midsize', 'Jumbo'],
+  },
+  Lamkin: {
+    models: ['Crossline', 'UTx', 'ST Soft'],
+    sizes: ['Standard', 'Midsize', 'Jumbo'],
+  },
+  Winn: {
+    models: ['DriTac', 'Excel', 'Grips Wrap'],
+    sizes: ['Standard', 'Midsize'],
+  },
+};
 
-const gripBrands = ['Golf Pride Tour Velvet', 'Golf Pride MCC', 'Lamkin Crossline', 'Lamkin UTx', 'Winn DriTac'];
-const gripSizes = ['Standard', 'Midsize', 'Jumbo'];
+const shaftLeadTimes = {
+  KBS: '2-4 weeks',
+  Axiom: '1-2 weeks',
+  'LA Golf': '3-5 weeks',
+  'True Temper': '2-3 weeks',
+  Fujikura: '4-6 weeks',
+};
 
 /**
  * Main Golf Configurator Component
@@ -43,6 +64,23 @@ export function GolfConfigurator() {
   console.log('🎯 BUILD: New step-based UI with progress indicator');
 
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Get current lead time based on selected shafts
+  const getCurrentLeadTime = () => {
+    // Default lead time if no shafts selected
+    const defaultLeadTime = '2 weeks';
+
+    // Get selected shaft brands from ShaftService/data
+    const selectedShaftIds = Object.values(selectedShafts.value);
+    if (selectedShaftIds.length === 0) {
+      return defaultLeadTime;
+    }
+
+    // For now, use KBS as the example since that's what's in the mockup
+    // This should eventually be determined by the actual selected shaft brand
+    // from the ShaftService data
+    return shaftLeadTimes['KBS'] || defaultLeadTime;
+  };
 
   // Helper functions
   const findClub = (clubNumber) => {
@@ -72,7 +110,7 @@ export function GolfConfigurator() {
     if (!club) return;
 
     const isCurrentlySelected = isClubSelected(ironNumber);
-    
+
     if (ironNumber === '4') {
       if (!isCurrentlySelected) {
         // Selecting 4: must also select 5
@@ -118,7 +156,12 @@ export function GolfConfigurator() {
     } else if (currentStep === 1) {
       // For now, allow progression from shaft step (ShaftPicker handles its own validation)
       setCurrentStep(2);
-    } else if (currentStep === 2 && selectedGrip.value?.brand && selectedGrip.value?.size) {
+    } else if (
+      currentStep === 2 &&
+      selectedGrip.value?.brand &&
+      selectedGrip.value?.model &&
+      selectedGrip.value?.size
+    ) {
       setCurrentStep(3);
     } else if (currentStep === 3 && canAddToCart.value) {
       // Trigger Add to Cart functionality
@@ -153,8 +196,13 @@ export function GolfConfigurator() {
     }
 
     // Step 3 (Review) unlocked when grip requirements are met
-    if (selectedHand.value && selectedClubs.value.length >= 5 && 
-        selectedGrip.value?.brand && selectedGrip.value?.size) {
+    if (
+      selectedHand.value &&
+      selectedClubs.value.length >= 5 &&
+      selectedGrip.value?.brand &&
+      selectedGrip.value?.model &&
+      selectedGrip.value?.size
+    ) {
       maxStep = 3;
     }
 
@@ -172,7 +220,7 @@ export function GolfConfigurator() {
         await productService.fetchClubHeadProducts();
 
         console.log('✅ Configurator initialization complete');
-        
+
         // Default clubs are already initialized in useGolfState.js
       } catch (error) {
         console.error('🏌️ Failed to initialize configurator:', error);
@@ -309,11 +357,15 @@ export function GolfConfigurator() {
                 ))}
               </div>
             </div>
-
             {/* Select Irons */}
             <div className='mb-6'>
               <div className='mb-4'>
-                <h2 className='text-base font-bold text-foreground mb-2'>Choose Your Clubs:</h2>
+                <div className='flex items-center justify-between mb-2'>
+                  <h2 className='text-base font-bold text-foreground'>Choose Your Clubs:</h2>
+                  <span className='text-sm font-medium text-primary'>
+                    {selectedClubs.value.length} {selectedClubs.value.length === 1 ? 'club' : 'clubs'} selected
+                  </span>
+                </div>
                 <p className='text-sm text-muted-foreground'>
                   6-PW are required and included. Optional: 4 & 5 irons. Selecting 4 requires 5.
                 </p>
@@ -324,7 +376,7 @@ export function GolfConfigurator() {
                   <Tooltip
                     key={iron}
                     content={isClubLocked(iron) ? 'Required club - included in all sets' : null}
-                    side="top"
+                    side='top'
                   >
                     <button
                       onClick={() => toggleIron(iron)}
@@ -339,25 +391,25 @@ export function GolfConfigurator() {
                           : 'border-dashed border-border bg-card hover:border-muted-foreground hover:bg-muted hover:shadow-lg hover:-translate-y-1'
                       )}
                     >
-                    <span
-                      className={cn(
-                        'transition-colors duration-200',
-                        isClubSelected(iron) ? 'text-black' : 'text-card-foreground group-hover:text-foreground'
-                      )}
-                    >
-                      {iron === 'P' ? 'PW' : iron}
-                    </span>
+                      <span
+                        className={cn(
+                          'transition-colors duration-200',
+                          isClubSelected(iron) ? 'text-black' : 'text-card-foreground group-hover:text-foreground'
+                        )}
+                      >
+                        {iron === 'P' ? 'PW' : iron}
+                      </span>
 
-                    {/* Enhanced checkmark with smooth animation */}
-                    <div
-                      className={cn(
-                        'absolute -top-2 -right-2 h-6 w-6 rounded-full transition-all duration-300 ease-in-out',
-                        'flex items-center justify-center shadow-lg',
-                        isClubSelected(iron) ? 'bg-black scale-100 opacity-100' : 'bg-muted scale-0 opacity-0'
-                      )}
-                    >
-                      <Check className='h-3.5 w-3.5 text-white' strokeWidth={3} />
-                    </div>
+                      {/* Enhanced checkmark with smooth animation */}
+                      <div
+                        className={cn(
+                          'absolute -top-2 -right-2 h-6 w-6 rounded-full transition-all duration-300 ease-in-out',
+                          'flex items-center justify-center shadow-lg',
+                          isClubSelected(iron) ? 'bg-black scale-100 opacity-100' : 'bg-muted scale-0 opacity-0'
+                        )}
+                      >
+                        <Check className='h-3.5 w-3.5 text-white' strokeWidth={3} />
+                      </div>
 
                       {/* Subtle glow effect for selected items */}
                       {isClubSelected(iron) && (
@@ -367,6 +419,25 @@ export function GolfConfigurator() {
                   </Tooltip>
                 ))}
               </div>
+            </div>
+            <div className='mb-6'>
+              <h2 className='mb-3 text-base font-bold text-foreground'>Select Lie Adjustment</h2>
+              <SelectRoot value={selectedLie.value} onValueChange={(lie) => actions.setLie(lie)}>
+                {({ value, open, setOpen, onValueChange, onKeyDown }) => (
+                  <>
+                    <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
+                      <SelectValue placeholder='Select lie adjustment...' value={value} />
+                    </SelectTrigger>
+                    <SelectContent open={open}>
+                      {['Standard', '+1°', '+2°', '-1°', '-2°'].map((lie) => (
+                        <SelectItem key={lie} value={lie} selected={value === lie} onValueChange={onValueChange}>
+                          <span>{lie}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </>
+                )}
+              </SelectRoot>
             </div>
           </div>
         )}
@@ -378,16 +449,12 @@ export function GolfConfigurator() {
             {/* Grip Brand Selection */}
             <div className='mb-6'>
               <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Brand</h2>
-              <SelectRoot 
-                value={selectedGrip.value?.brand || ''} 
+              <SelectRoot
+                value={selectedGrip.value?.brand || ''}
                 onValueChange={(brand) => {
                   console.log('🤲 UI EVENT: Grip brand selection:', brand);
-                  if (selectedGrip.value?.size) {
-                    actions.setGrip(brand, selectedGrip.value.size);
-                  } else {
-                    // Temporarily set brand, wait for size selection
-                    selectedGrip.value = { brand, size: '' };
-                  }
+                  // Reset model and size when brand changes
+                  selectedGrip.value = { brand, model: '', size: '' };
                 }}
               >
                 {({ value, open, setOpen, onValueChange, onKeyDown }) => (
@@ -396,7 +463,7 @@ export function GolfConfigurator() {
                       <SelectValue placeholder='Choose a grip brand...' value={value} />
                     </SelectTrigger>
                     <SelectContent open={open}>
-                      {gripBrands.map((brand) => (
+                      {Object.keys(gripData).map((brand) => (
                         <SelectItem key={brand} value={brand} selected={value === brand} onValueChange={onValueChange}>
                           <span className='font-medium'>{brand}</span>
                         </SelectItem>
@@ -407,16 +474,54 @@ export function GolfConfigurator() {
               </SelectRoot>
             </div>
 
-            {/* Grip Size Selection */}
+            {/* Grip Model Selection */}
             {selectedGrip.value?.brand && (
               <div className='mb-6'>
+                <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Model</h2>
+                <SelectRoot
+                  value={selectedGrip.value?.model || ''}
+                  onValueChange={(model) => {
+                    console.log('🤲 UI EVENT: Grip model selection:', model);
+                    selectedGrip.value = {
+                      ...selectedGrip.value,
+                      model,
+                      size: '', // Reset size when model changes
+                    };
+                  }}
+                >
+                  {({ value, open, setOpen, onValueChange, onKeyDown }) => (
+                    <>
+                      <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
+                        <SelectValue placeholder='Choose a grip model...' value={value} />
+                      </SelectTrigger>
+                      <SelectContent open={open}>
+                        {gripData[selectedGrip.value.brand]?.models.map((model) => (
+                          <SelectItem
+                            key={model}
+                            value={model}
+                            selected={value === model}
+                            onValueChange={onValueChange}
+                          >
+                            <span>{model}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </>
+                  )}
+                </SelectRoot>
+              </div>
+            )}
+
+            {/* Grip Size Selection */}
+            {selectedGrip.value?.brand && selectedGrip.value?.model && (
+              <div className='mb-6'>
                 <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Size</h2>
-                <SelectRoot 
-                  value={selectedGrip.value?.size || ''} 
+                <SelectRoot
+                  value={selectedGrip.value?.size || ''}
                   onValueChange={(size) => {
                     console.log('🤲 UI EVENT: Grip size selection:', size);
-                    if (selectedGrip.value?.brand) {
-                      actions.setGrip(selectedGrip.value.brand, size);
+                    if (selectedGrip.value?.brand && selectedGrip.value?.model) {
+                      actions.setGrip(selectedGrip.value.brand, selectedGrip.value.model, size);
                     }
                   }}
                 >
@@ -426,7 +531,7 @@ export function GolfConfigurator() {
                         <SelectValue placeholder='Choose a grip size...' value={value} />
                       </SelectTrigger>
                       <SelectContent open={open}>
-                        {gripSizes.map((size) => (
+                        {gripData[selectedGrip.value.brand]?.sizes.map((size) => (
                           <SelectItem key={size} value={size} selected={value === size} onValueChange={onValueChange}>
                             <span>{size}</span>
                           </SelectItem>
@@ -486,9 +591,7 @@ export function GolfConfigurator() {
               <div className='flex items-center justify-between p-4 bg-card rounded-lg border'>
                 <div>
                   <span className='text-sm text-muted-foreground'>Shaft</span>
-                  <p className='font-medium text-base'>
-                    Custom shaft configuration
-                  </p>
+                  <p className='font-medium text-base'>Custom shaft configuration</p>
                 </div>
                 <Button
                   variant='outline'
@@ -505,8 +608,8 @@ export function GolfConfigurator() {
                 <div>
                   <span className='text-sm text-muted-foreground'>Grip</span>
                   <p className='font-medium text-base'>
-                    {selectedGrip.value?.brand && selectedGrip.value?.size
-                      ? `${selectedGrip.value.brand}, ${selectedGrip.value.size}`
+                    {selectedGrip.value?.brand && selectedGrip.value?.model && selectedGrip.value?.size
+                      ? `${selectedGrip.value.brand} ${selectedGrip.value.model}, ${selectedGrip.value.size}`
                       : 'Not configured'}
                   </p>
                 </div>
@@ -528,8 +631,11 @@ export function GolfConfigurator() {
           className={cn(
             'mb-4 w-full h-12 text-base font-medium rounded-full transition-all duration-200',
             (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) ||
-              (currentStep === 1) ||
-              (currentStep === 2 && selectedGrip.value?.brand && selectedGrip.value?.size) ||
+              currentStep === 1 ||
+              (currentStep === 2 &&
+                selectedGrip.value?.brand &&
+                selectedGrip.value?.model &&
+                selectedGrip.value?.size) ||
               (currentStep === 3 && canAddToCart.value)
               ? 'bg-black hover:bg-black/90 text-white'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
@@ -537,7 +643,8 @@ export function GolfConfigurator() {
           onClick={handleNext}
           disabled={
             (currentStep === 0 && (!selectedHand.value || selectedClubs.value.length < 5)) ||
-            (currentStep === 2 && (!selectedGrip.value?.brand || !selectedGrip.value?.size)) ||
+            (currentStep === 2 &&
+              (!selectedGrip.value?.brand || !selectedGrip.value?.model || !selectedGrip.value?.size)) ||
             (currentStep === 3 && !canAddToCart.value) ||
             isLoading.value
           }
@@ -563,7 +670,7 @@ export function GolfConfigurator() {
 
         {/* Footer */}
         <div className='flex items-center justify-between text-muted-foreground'>
-          <span>Estimated lead time is 2 weeks.</span>
+          <span>Estimated lead time is {getCurrentLeadTime()}.</span>
           <button onClick={reset} className='font-medium text-foreground underline hover:no-underline'>
             Reset
           </button>
