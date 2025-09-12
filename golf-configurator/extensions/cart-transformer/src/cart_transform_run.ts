@@ -5,8 +5,8 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
   type CartLineInput = (typeof input.cart.lines)[0];
   const groupedItems: Record<string, CartLineInput[]> = {};
 
-  // Real Product Merge logging - Version 4.1
-  console.log('=== Cart Transformer Started v4.1 (Real Product Merge + Shaft Components) ===');
+  // Real Product Merge logging - Version 4.2
+  console.log('=== Cart Transformer Started v4.2 (Dynamic Parent Variant + Configurable Bundle) ===');
   console.log('Cart lines:', input.cart.lines.length);
   console.log('Timestamp:', new Date().toISOString());
 
@@ -91,6 +91,20 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
 
     console.log('Bundle title:', title);
 
+    const parentVariantId = firstItem.parentVariantId?.value;
+
+    if (!parentVariantId) {
+      console.error(
+        '❌ No parent variant ID found in cart properties - bundle parent product must be configured in theme settings'
+      );
+      throw new Error(
+        'Parent variant ID missing from cart properties - please configure bundle parent product in theme editor'
+      );
+    }
+
+    console.log('🎯 Using parent variant ID:', parentVariantId);
+    console.log('🎯 Source: Theme Settings (via cart properties)');
+
     return {
       linesMerge: {
         cartLines: group.map((line) => ({
@@ -98,14 +112,13 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
           quantity: line.quantity,
         })),
         title: title,
-        parentVariantId: 'gid://shopify/ProductVariant/55257569722692',
-        // No need for priceAdjustment - use the natural sum of real product prices
+        parentVariantId: parentVariantId,
       },
     };
   });
 
   console.log('Total operations:', operations.length);
-  console.log('=== Cart Transformer Complete v4.1 ===');
+  console.log('=== Cart Transformer Complete v4.2 ===');
 
   return {
     operations,

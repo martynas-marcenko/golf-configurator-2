@@ -23,6 +23,9 @@ query CartTransformRunInput {
       bundleId: attribute(key: "bundleId") {
         value
       }
+      parentVariantId: attribute(key: "parentVariantId") {
+        value
+      }
       hand: attribute(key: "hand") {
         value
       }

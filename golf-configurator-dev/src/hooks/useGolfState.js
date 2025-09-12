@@ -2,6 +2,7 @@ import { signal, computed } from '@preact/signals';
 import * as productService from '../services/ProductService.js';
 import * as shaftService from '../services/ShaftService.js';
 import { PriceFormatter } from '../utils/formatters.js';
+import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
 
 // Data source configuration - set to true to use real Shopify data locally
 export const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
@@ -11,6 +12,7 @@ console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOStrin
 
 // Detect development environment
 const isDevelopment = import.meta.env.DEV;
+
 
 /**
  * Golf configurator state management using Preact signals
@@ -77,12 +79,10 @@ export const defaultClubSelections = {
 
 export const selectedClubsCount = computed(() => selectedClubs.value.length);
 
+// Base price will be calculated when needed (in add to cart)
 export const basePrice = computed(() => {
-  if (!selectedHand.value) return 0;
-
-  const setType = ironSetType.value;
-  const ironVariant = productService.findVariantBySetSize(setType);
-  return ironVariant ? ironVariant.price : 0;
+  // For now, return 0 - actual price will be fetched when adding to cart
+  return 0;
 });
 
 export const totalPrice = computed(() => {
@@ -233,20 +233,8 @@ export const actions = {
       // Get the iron variant based on computed iron set type
       const setType = ironSetType.value;
       console.log('🏌️ DEBUG: Iron set type:', setType);
-      const cachedProducts = productService.getCachedProducts();
-      console.log('🏌️ DEBUG: Cached products keys:', Object.keys(cachedProducts));
-      console.log('🏌️ DEBUG: Full cached products:', cachedProducts);
-      const productInfo = cachedProducts[setType];
-      console.log('🏌️ DEBUG: Product info for', setType, ':', productInfo);
-      if (!productInfo) {
-        throw new Error(
-          `Product information not available for set type "${setType}"! Available: ${Object.keys(cachedProducts).join(
-            ', '
-          )}`
-        );
-      }
-
-      const ironVariant = productService.findVariantBySetSize(setType);
+      
+      const ironVariant = await productService.findVariantBySetSize(setType);
       if (!ironVariant) {
         throw new Error('Iron variant not found for selected configuration!');
       }
@@ -258,6 +246,10 @@ export const actions = {
       const bundleId = `golf-${Date.now()}`;
       console.log('🎯 Generated bundleId:', bundleId);
 
+      // Get parent variant ID from theme settings (for cart transformer)
+      const parentVariantId = getParentVariantIdFromThemeSettings();
+      console.log('🎯 Parent variant ID for cart transformer:', parentVariantId);
+
       // Prepare cart add data - Real Product Approach matching cart transformer
       const cartItems = [
         {
@@ -265,6 +257,7 @@ export const actions = {
           quantity: 1,
           properties: {
             bundleId: bundleId,
+            parentVariantId: parentVariantId,
             hand: selectedHand.value,
             setSize: ironSetType.value,
             clubList: JSON.stringify(selectedClubs.value.map((club) => club.id)), // Note: changed to clubList to match transformer
@@ -393,7 +386,7 @@ if (typeof window !== 'undefined') {
   );
   console.log('🎯 Default selection:', selectedClubs.value.map((c) => c.name).join(', '));
   console.log('💰 Iron set prices: Available from product service (real Shopify data)');
-  shaftService.getAvailableBrands().then(brands => {
+  shaftService.getAvailableBrands().then((brands) => {
     console.log('🔧 Available shaft brands:', brands.join(', '));
   });
   console.groupEnd();

@@ -5,56 +5,10 @@
 
 import { USE_REAL_DATA } from '../hooks/useGolfState';
 import mockData from '../mocks/shopify-data.json';
+import { getBundleParentProductHandle } from '../utils/dataAttributes.js';
 
-// Cache for loaded product data
-let productCache = null;
+// No caching - fetch fresh data from Shopify each time
 
-/**
- * Get the bundle parent product handle from theme settings
- */
-const getBundleParentProductHandle = () => {
-  const configuratorElement = document.getElementById('golf-configurator');
-
-  if (!configuratorElement) {
-    throw new Error('Golf configurator element not found - cannot read bundle parent product data');
-  }
-
-  const bundleParentProductData = configuratorElement.getAttribute('data-bundle-parent-product');
-
-  if (!bundleParentProductData) {
-    throw new Error(
-      'No bundle parent product data found in theme settings - please configure bundle parent product in theme editor'
-    );
-  }
-
-  try {
-    // Handle the case where the JSON string contains extra quotes
-    let cleanedData = bundleParentProductData;
-
-    // If it's a string wrapped in quotes, extract it
-    if (cleanedData.startsWith('"') && cleanedData.endsWith('"')) {
-      cleanedData = cleanedData.slice(1, -1);
-    }
-
-    // If it's just a string (product handle), use it directly
-    if (typeof cleanedData === 'string' && !cleanedData.startsWith('{')) {
-      return cleanedData;
-    }
-
-    const bundleParentProduct = JSON.parse(bundleParentProductData);
-
-    if (!bundleParentProduct?.handle) {
-      throw new Error('No bundle parent product selected in theme settings - please select a product in theme editor');
-    }
-
-    return bundleParentProduct.handle;
-  } catch (error) {
-    if (error.message.includes('theme settings')) {
-      throw error; // Re-throw our custom errors
-    }
-    throw new Error('Invalid bundle parent product data format in theme settings - please check theme configuration');
-  }
-};
 
 /**
  * Main function to fetch club head products
@@ -92,7 +46,6 @@ const fetchRealClubProducts = async () => {
     });
     console.groupEnd();
 
-    productCache = product;
     return product;
   } catch (error) {
     console.error('Failed to fetch club head products:', error);
@@ -124,52 +77,35 @@ const fetchMockClubProducts = async () => {
     variants: mockVariants,
   };
 
-  productCache = mockProduct;
   console.log('🧪 MOCK: Created unified product with', mockVariants.length, 'variants');
 
   return mockProduct;
 };
 
 /**
- * Find variant by set size
+ * Find variant by set size - fetches fresh data from Shopify
  */
-export const findVariantBySetSize = (setSize) => {
-  if (!productCache) {
-    console.warn('No product data loaded');
+export const findVariantBySetSize = async (setSize) => {
+  const product = await fetchClubHeadProducts();
+  
+  if (!product) {
+    console.warn('No product data available from Shopify');
     return null;
   }
 
   const normalizedSetSize = setSize.replace('-', ''); // Handle both "4PW" and "4-PW"
 
   // Find variant by title matching set size using modern find method
-  const variant = productCache.variants.find((variant) => {
+  let variant = product.variants.find((variant) => {
     const variantTitle = variant.title.replace('-', ''); // Normalize variant title too
     return variantTitle === normalizedSetSize;
   });
 
   if (!variant) {
-    console.warn(`No variant found for setSize: ${setSize}`);
+    console.error(`❌ No variant found for setSize: ${setSize}. Available variants:`, product.variants.map(v => v.title));
     return null;
   }
 
   return variant;
 };
 
-/**
- * Get cached product data
- */
-export const getCachedProducts = () => {
-  // Return in the old format for backward compatibility
-  if (!productCache) return null;
-
-  // Using reduce for more functional approach
-  return productCache.variants.reduce((foundProducts, variant) => {
-    const normalizedSetSize = variant.title.replace('-', '');
-    foundProducts[normalizedSetSize] = {
-      product: productCache,
-      variant,
-      setSize: normalizedSetSize,
-    };
-    return foundProducts;
-  }, {});
-};
