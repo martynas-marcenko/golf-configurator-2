@@ -231,29 +231,6 @@ export function ShaftPicker() {
         </div>
       )}
 
-      {/* Lie Adjustment Selection */}
-      {selectedBrand && shaftOptions.length > 0 && !loadingShafts && (
-        <div className='mb-6'>
-          <h2 className='mb-3 text-base font-bold text-foreground'>Select Lie Adjustment</h2>
-          <SelectRoot value={selectedLie} onValueChange={setSelectedLie}>
-            {({ value, open, setOpen, onValueChange, onKeyDown }) => (
-              <>
-                <SelectTrigger value={value} open={open} setOpen={setOpen} onKeyDown={onKeyDown}>
-                  <SelectValue placeholder='Choose lie adjustment...' value={value} />
-                </SelectTrigger>
-                <SelectContent open={open}>
-                  {lieAdjustments.map((lie) => (
-                    <SelectItem key={lie} value={lie} selected={value === lie} onValueChange={onValueChange}>
-                      {lie}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </>
-            )}
-          </SelectRoot>
-        </div>
-      )}
-
       {/* Shaft Length Selection */}
       {selectedBrand && shaftOptions.length > 0 && !loadingShafts && (
         <div className='mb-6'>
