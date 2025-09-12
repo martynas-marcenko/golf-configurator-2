@@ -101,6 +101,12 @@ export const findVariantBySetSize = async (setSize) => {
     return variantTitle === normalizedSetSize;
   });
 
+  // For virtual/wrapper products with only "Default Title", use it for all set sizes
+  if (!variant && product.variants.length === 1 && product.variants[0].title === 'Default Title') {
+    console.log(`🔄 Using Default Title variant for virtual product (set size: ${setSize})`);
+    variant = product.variants[0];
+  }
+
   if (!variant) {
     console.error(`❌ No variant found for setSize: ${setSize}. Available variants:`, product.variants.map(v => v.title));
     return null;

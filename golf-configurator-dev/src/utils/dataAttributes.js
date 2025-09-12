@@ -8,7 +8,7 @@
  * Get parent variant ID from data attributes for cart transformer
  * Reads from data-bundle-parent-product attribute set by theme extension
  */
-export const getParentVariantIdFromThemeSettings = () => {
+export const getParentVariantIdFromThemeSettings = async () => {
   try {
     const configuratorElement = document.getElementById('golf-configurator');
 
@@ -35,11 +35,29 @@ export const getParentVariantIdFromThemeSettings = () => {
       cleanedData = cleanedData.slice(1, -1);
     }
 
-    // If it's just a product handle string, we need to get the actual product data
+    // If it's just a product handle string, fetch the product data
     if (typeof cleanedData === 'string' && !cleanedData.startsWith('{')) {
-      throw new Error(
-        'Bundle parent product is configured as handle only - need full product data with variants for parent variant ID. Please ensure theme extension passes complete product object.'
-      );
+      console.log('🔍 Received product handle, fetching full product data:', cleanedData);
+
+      try {
+        const response = await fetch(`/products/${cleanedData}.js`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch product data for handle "${cleanedData}": ${response.status}`);
+        }
+
+        const productData = await response.json();
+        console.log('📦 Fetched product data:', productData.title);
+
+        if (!productData?.variants?.[0]?.id) {
+          throw new Error(`No valid parent variant found in fetched product "${cleanedData}"`);
+        }
+
+        const parentVariantId = `gid://shopify/ProductVariant/${productData.variants[0].id}`;
+        console.log('🎯 Found parent variant ID from API:', parentVariantId);
+        return parentVariantId;
+      } catch (fetchError) {
+        throw new Error(`Failed to fetch bundle parent product: ${fetchError.message}`);
+      }
     }
 
     const bundleParentProduct = JSON.parse(bundleParentProductData);

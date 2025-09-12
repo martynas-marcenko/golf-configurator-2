@@ -247,7 +247,7 @@ export const actions = {
       console.log('🎯 Generated bundleId:', bundleId);
 
       // Get parent variant ID from theme settings (for cart transformer)
-      const parentVariantId = getParentVariantIdFromThemeSettings();
+      const parentVariantId = await getParentVariantIdFromThemeSettings();
       console.log('🎯 Parent variant ID for cart transformer:', parentVariantId);
 
       // Prepare cart add data - Real Product Approach matching cart transformer
