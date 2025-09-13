@@ -57,10 +57,6 @@ const shaftLeadTimes = {
  * Updated with new step-based UI design
  */
 export function GolfConfigurator() {
-  console.log('🏌️ Golf Configurator: PREACT VERSION', 'v2.0.0', 'loaded at', new Date().toISOString());
-  console.log('💰 FEATURE: Dynamic currency formatting enabled');
-  console.log('🔧 FEATURE: Preact signals for reactive state management');
-  console.log('🎯 BUILD: New step-based UI with progress indicator');
 
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -144,7 +140,6 @@ export function GolfConfigurator() {
   const reset = () => {
     setCurrentStep(0);
     actions.reset(); // Use the global reset from state management
-    console.log('Reset functionality - full reset performed');
   };
 
   // Removed old goToNextStep - replaced with handleNext
@@ -164,10 +159,8 @@ export function GolfConfigurator() {
       setCurrentStep(3);
     } else if (currentStep === 3 && canAddToCart.value) {
       // Trigger Add to Cart functionality
-      console.log('🛒 Add to Cart button clicked');
       const success = await actions.addToCart();
       if (success) {
-        console.log('✅ Successfully added to cart!');
         // Could reset or show success message
       }
     }
@@ -212,14 +205,8 @@ export function GolfConfigurator() {
   useEffect(() => {
     const initializeConfigurator = async () => {
       try {
-        console.log('🏌️ Starting configurator initialization...');
-
         // Fetch club head products using the same approach as vanilla
-        console.log('🏌️ Fetching club head products...');
         await productService.fetchClubHeadProducts();
-
-        console.log('✅ Configurator initialization complete');
-
         // Default clubs are already initialized in useGolfState.js
       } catch (error) {
         console.error('🏌️ Failed to initialize configurator:', error);
@@ -451,7 +438,6 @@ export function GolfConfigurator() {
               <SelectRoot
                 value={selectedGrip.value?.brand || ''}
                 onValueChange={(brand) => {
-                  console.log('🤲 UI EVENT: Grip brand selection:', brand);
                   // Reset model and size when brand changes
                   selectedGrip.value = { brand, model: '', size: '' };
                 }}
@@ -480,7 +466,6 @@ export function GolfConfigurator() {
                 <SelectRoot
                   value={selectedGrip.value?.model || ''}
                   onValueChange={(model) => {
-                    console.log('🤲 UI EVENT: Grip model selection:', model);
                     selectedGrip.value = {
                       ...selectedGrip.value,
                       model,
@@ -518,7 +503,6 @@ export function GolfConfigurator() {
                 <SelectRoot
                   value={selectedGrip.value?.size || ''}
                   onValueChange={(size) => {
-                    console.log('🤲 UI EVENT: Grip size selection:', size);
                     if (selectedGrip.value?.brand && selectedGrip.value?.model) {
                       actions.setGrip(selectedGrip.value.brand, selectedGrip.value.model, size);
                     }
