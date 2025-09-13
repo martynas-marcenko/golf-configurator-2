@@ -44,21 +44,28 @@ console.log('   Data source:', USE_REAL_DATA ? 'Real Shopify API' : 'Mock JSON d
 
 export const priceFormatter = new PriceFormatter();
 
-// Available options
+// Available options - using Shopify format directly
 export const handOptions = signal([
-  { id: 'left', name: 'Left Hand' },
-  { id: 'right', name: 'Right Hand' },
+  { id: 'Left Handed', name: 'Left Hand' },
+  { id: 'Right Handed', name: 'Right Hand' },
 ]);
 
-// Computed iron set type based on selected clubs
+// Computed iron set type based on selected clubs - using Shopify format directly
 export const ironSetType = computed(() => {
   const clubIds = selectedClubs.value.map((club) => club.id);
-  if (clubIds.includes('4')) return '4PW'; // Match ProductService keys (no hyphen)
-  if (clubIds.includes('5')) return '5PW'; // Match ProductService keys (no hyphen)
-  return '6PW'; // Match ProductService keys (no hyphen)
+  const clubCount = clubIds.length;
+
+  // For individual clubs (1 club selected), use "Iron" variant
+  if (clubCount === 1) {
+    return 'Iron';
+  }
+
+  // For sets, determine by lowest iron included - return Shopify format
+  if (clubIds.includes('4')) return '4-PW';
+  if (clubIds.includes('5')) return '5-PW';
+  return '6-PW';
 });
 
-// Club definitions matching vanilla JS logic (iron sets only)
 export const availableClubs = signal([
   { id: '4', name: '4-Iron', type: 'iron', isRequired: false, isOptional: true },
   { id: '5', name: '5-Iron', type: 'iron', isRequired: false, isOptional: true },
@@ -70,9 +77,9 @@ export const availableClubs = signal([
 ]);
 
 export const defaultClubSelections = {
-  '4PW': ['4', '5', '6', '7', '8', '9', 'PW'], // 7 clubs
-  '5PW': ['5', '6', '7', '8', '9', 'PW'], // 6 clubs
-  '6PW': ['6', '7', '8', '9', 'PW'], // 5 clubs (minimum)
+  '4-PW': ['4', '5', '6', '7', '8', '9', 'PW'], // 7 clubs
+  '5-PW': ['5', '6', '7', '8', '9', 'PW'], // 6 clubs
+  '6-PW': ['6', '7', '8', '9', 'PW'], // 5 clubs (minimum)
 };
 
 export const selectedClubsCount = computed(() => selectedClubs.value.length);
@@ -241,7 +248,7 @@ export const actions = {
       const setType = ironSetType.value;
       console.log('🏌️ DEBUG: Iron set type:', setType);
 
-      const ironVariant = await productService.findVariantBySetSize(setType);
+      const ironVariant = await productService.findVariantBySetSize(setType, selectedHand.value);
       if (!ironVariant) {
         throw new Error('Iron variant not found for selected configuration!');
       }

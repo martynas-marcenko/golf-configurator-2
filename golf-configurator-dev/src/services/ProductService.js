@@ -82,9 +82,10 @@ const fetchMockClubProducts = async () => {
 };
 
 /**
- * Find variant by set size - fetches fresh data from Shopify
+ * Find variant by set size and hand using direct option matching
+ * Zero conversion needed - direct 1:1 mapping with Shopify data
  */
-export const findVariantBySetSize = async (setSize) => {
+export const findVariantBySetSize = async (setSize, hand) => {
   const product = await fetchClubHeadProducts();
 
   if (!product) {
@@ -92,19 +93,22 @@ export const findVariantBySetSize = async (setSize) => {
     return null;
   }
 
-  // Simple normalization: remove hyphens for matching
-  const normalizedSetSize = setSize.replace('-', '');
+  console.log(`🔍 Looking for variant with option1="${setSize}", option2="${hand}"`);
 
-  // Find variant by title matching set size
   const variant = product.variants.find((variant) => {
-    const variantTitle = variant.title.replace('-', '');
-    return variantTitle === normalizedSetSize;
+    const matches = variant.option1 === setSize && variant.option2 === hand;
+
+    if (matches) {
+      console.log(`✅ Found variant: ${variant.title} (ID: ${variant.id})`);
+    }
+
+    return matches;
   });
 
   if (!variant) {
     console.error(
-      `❌ No variant found for setSize: ${setSize}. Available variants:`,
-      product.variants.map((v) => v.title)
+      `❌ No variant found for option1="${setSize}", option2="${hand}". Available variants:`,
+      product.variants.map((v) => `${v.option1} / ${v.option2}`)
     );
     return null;
   }

@@ -2,58 +2,116 @@
   "products": {
     "ironSets": {
       "4PW": {
-        "id": "15226681065796",
+        "id": "8989523149144",
         "title": "Origin Combo Length Chrome",
         "handle": "origin-combo-length-chrome",
         "variants": [
           {
-            "id": "55435517559108",
-            "title": "4-PW",
-            "price": 123900,
+            "id": "53633760919896",
+            "title": "4-PW / Right Handed",
+            "price": 137900,
             "available": true,
             "inventory_quantity": 10,
-            "option1": "4-PW"
+            "option1": "4-PW",
+            "option2": "Right Handed"
+          },
+          {
+            "id": "55281362469208",
+            "title": "4-PW / Left Handed",
+            "price": 137900,
+            "available": true,
+            "inventory_quantity": 5,
+            "option1": "4-PW",
+            "option2": "Left Handed"
           }
         ],
-        "setSize": "4PW",
+        "setSize": "4-PW",
         "clubCount": 7,
-        "priceInPounds": "£1,239.00"
+        "priceInPounds": "£1,379.00"
       },
       "5PW": {
-        "id": "15226681065796",
+        "id": "8989523149144",
         "title": "Origin Combo Length Chrome",
         "handle": "origin-combo-length-chrome",
         "variants": [
           {
-            "id": "55435517591876",
-            "title": "5-PW",
-            "price": 106200,
+            "id": "53633760985432",
+            "title": "5-PW / Right Handed",
+            "price": 118200,
             "available": true,
             "inventory_quantity": 15,
-            "option1": "5-PW"
+            "option1": "5-PW",
+            "option2": "Right Handed"
+          },
+          {
+            "id": "55281362501976",
+            "title": "5-PW / Left Handed",
+            "price": 118200,
+            "available": true,
+            "inventory_quantity": 8,
+            "option1": "5-PW",
+            "option2": "Left Handed"
           }
         ],
-        "setSize": "5PW",
+        "setSize": "5-PW",
         "clubCount": 6,
-        "priceInPounds": "£1,062.00"
+        "priceInPounds": "£1,182.00"
       },
       "6PW": {
-        "id": "15226681065796",
+        "id": "8989523149144",
         "title": "Origin Combo Length Chrome",
         "handle": "origin-combo-length-chrome",
         "variants": [
           {
-            "id": "55435517624644",
-            "title": "6-PW",
-            "price": 88500,
+            "id": "53633761050968",
+            "title": "6-PW / Right Handed",
+            "price": 98500,
             "available": true,
             "inventory_quantity": 20,
-            "option1": "6-PW"
+            "option1": "6-PW",
+            "option2": "Right Handed"
+          },
+          {
+            "id": "55281362534744",
+            "title": "6-PW / Left Handed",
+            "price": 98500,
+            "available": true,
+            "inventory_quantity": 12,
+            "option1": "6-PW",
+            "option2": "Left Handed"
           }
         ],
-        "setSize": "6PW",
+        "setSize": "6-PW",
         "clubCount": 5,
-        "priceInPounds": "£885.00"
+        "priceInPounds": "£985.00"
+      },
+      "Iron": {
+        "id": "8989523149144",
+        "title": "Origin Combo Length Chrome",
+        "handle": "origin-combo-length-chrome",
+        "variants": [
+          {
+            "id": "53783838523736",
+            "title": "Iron / Right Handed",
+            "price": 19700,
+            "available": true,
+            "inventory_quantity": 25,
+            "option1": "Iron",
+            "option2": "Right Handed"
+          },
+          {
+            "id": "55281362567512",
+            "title": "Iron / Left Handed",
+            "price": 19700,
+            "available": true,
+            "inventory_quantity": 15,
+            "option1": "Iron",
+            "option2": "Left Handed"
+          }
+        ],
+        "setSize": "Iron",
+        "clubCount": 1,
+        "priceInPounds": "£197.00"
       }
     },
     "shafts": {
