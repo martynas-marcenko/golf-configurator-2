@@ -5,7 +5,7 @@ import { PriceFormatter } from '../utils/formatters.js';
 import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
 
 // Data source configuration - set to true to use real Shopify data locally
-export const USE_REAL_DATA = false; // Toggle this to switch between mock and real data
+export const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
 
 // FORCE RELOAD TEST - This should show up in console
 console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOString());
