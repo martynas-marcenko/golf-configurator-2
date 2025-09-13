@@ -1,406 +1,422 @@
-import { signal, computed } from '@preact/signals';
-import * as productService from '../services/ProductService.js';
-import * as shaftService from '../services/ShaftService.js';
-import { PriceFormatter } from '../utils/formatters.js';
-import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
-
-// Data source configuration - set to true to use real Shopify data locally
-export const USE_REAL_DATA = true; // Toggle this to switch between mock and real data
-
-// FORCE RELOAD TEST - This should show up in console
-console.error('🔥 FORCE RELOAD TEST - FILE UPDATED AT:', new Date().toISOString());
-
-// Detect development environment
-const isDevelopment = import.meta.env.DEV;
-
 /**
- * Golf configurator state management using Preact signals
- * Modern functional architecture with centralized mock data
+ * Golf Configurator State Management
+ * Modern architecture with persistence and clean separation of concerns
  */
 
-// Default club selection (reusable)
-const DEFAULT_CLUBS = [
-  { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '9', name: '9-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
-];
+import { signal, computed, effect } from '@preact/signals';
+import * as productService from '../services/ProductService.js';
+import * as shaftService from '../services/ShaftService.js';
+import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
+import { PersistenceManager, Logger } from '../utils/persistence.js';
+import { DEFAULT_STATE_VALUES, DEFAULT_CLUBS, HAND_OPTIONS, AVAILABLE_CLUBS } from '../constants/defaults.js';
+import APP_CONFIG from '../config/app.js';
 
-// Core state signals
-export const selectedHand = signal(null);
-export const selectedClubs = signal([...DEFAULT_CLUBS]); // Start with default clubs
-export const selectedShafts = signal({});
-export const selectedGrip = signal(null); // { brand: string, model: string, size: string }
-export const selectedLie = signal('Standard'); // Default lie
+// ================================
+// STATE INITIALIZATION WITH PERSISTENCE
+// ================================
+
+function getInitialState() {
+  if (!APP_CONFIG.PERSISTENCE.enabled) {
+    return {
+      ...DEFAULT_STATE_VALUES,
+      selectedLie: APP_CONFIG.BUSINESS.defaultLie,
+    };
+  }
+
+  return PersistenceManager.loadState();
+}
+
+const initialState = getInitialState();
+
+// ================================
+// CORE STATE SIGNALS
+// ================================
+
+export const selectedHand = signal(initialState.selectedHand);
+export const selectedClubs = signal([...initialState.selectedClubs]);
+export const selectedShafts = signal({ ...initialState.selectedShafts }); // Legacy - will be replaced
+export const selectedGrip = signal(initialState.selectedGrip);
+export const selectedLie = signal(initialState.selectedLie);
+
+// New shaft signals - clean direct approach
+export const selectedShaftBrand = signal(initialState.selectedShaftBrand || '');
+export const selectedShaftFlex = signal(initialState.selectedShaftFlex || '');
+export const selectedShaftLength = signal(initialState.selectedShaftLength || 'Standard');
+
 export const isLoading = signal(false);
 export const error = signal(null);
 
-// DEBUG: Log service configuration immediately
-console.log('🔧 SERVICE CONFIG DEBUG:');
-console.log('   USE_REAL_DATA:', USE_REAL_DATA);
-console.log('   isDevelopment:', isDevelopment);
-console.log('   Data source:', USE_REAL_DATA ? 'Real Shopify API' : 'Mock JSON data');
+// Static data
+export const handOptions = signal([...HAND_OPTIONS]);
+export const availableClubs = signal([...AVAILABLE_CLUBS]);
 
-export const priceFormatter = new PriceFormatter();
+// ================================
+// COMPUTED VALUES
+// ================================
 
-// Available options - using Shopify format directly
-export const handOptions = signal([
-  { id: 'Left Handed', name: 'Left Hand' },
-  { id: 'Right Handed', name: 'Right Hand' },
-]);
-
-// Computed iron set type based on selected clubs - using Shopify format directly
 export const ironSetType = computed(() => {
   const clubIds = selectedClubs.value.map((club) => club.id);
   const clubCount = clubIds.length;
 
-  // For individual clubs (1 club selected), use "Iron" variant
-  if (clubCount === 1) {
-    return 'Iron';
-  }
-
-  // For sets, determine by lowest iron included - return Shopify format
+  if (clubCount === 1) return 'Iron';
   if (clubIds.includes('4')) return '4-PW';
   if (clubIds.includes('5')) return '5-PW';
   return '6-PW';
 });
 
-export const availableClubs = signal([
-  { id: '4', name: '4-Iron', type: 'iron', isRequired: false, isOptional: true },
-  { id: '5', name: '5-Iron', type: 'iron', isRequired: false, isOptional: true },
-  { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '7', name: '7-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '8', name: '8-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: '9', name: '9-Iron', type: 'iron', isRequired: true, isOptional: false },
-  { id: 'PW', name: 'Pitching Wedge', type: 'wedge', isRequired: true, isOptional: false },
-]);
-
-export const defaultClubSelections = {
-  '4-PW': ['4', '5', '6', '7', '8', '9', 'PW'], // 7 clubs
-  '5-PW': ['5', '6', '7', '8', '9', 'PW'], // 6 clubs
-  '6-PW': ['6', '7', '8', '9', 'PW'], // 5 clubs (minimum)
-};
-
-export const selectedClubsCount = computed(() => selectedClubs.value.length);
-
-export const selectedClubsDisplay = computed(() => {
-  const count = selectedClubs.value.length;
-  return `${count} ${count === 1 ? 'club' : 'clubs'}`;
-});
-
-// Base price will be calculated when needed (in add to cart)
-export const basePrice = computed(() => {
-  // For now, return 0 - actual price will be fetched when adding to cart
-  return 0;
-});
-
-export const totalPrice = computed(() => {
-  // For now, just return the base price (no shaft upgrades in this focus)
-  return basePrice.value;
-});
-
-export const formattedTotalPrice = computed(() => {
-  return priceFormatter.formatCurrency(totalPrice.value);
-});
 
 export const canAddToCart = computed(() => {
   return (
     selectedHand.value &&
-    selectedClubs.value.length >= 5 &&
+    selectedClubs.value.length >= APP_CONFIG.BUSINESS.minClubCount &&
     selectedGrip.value?.brand &&
     selectedGrip.value?.model &&
     selectedGrip.value?.size
-  ); // Require hand, clubs, and complete grip selections
+  );
 });
 
-export const actions = {
-  setHand(hand) {
-    console.log(`🤝 Hand changed: ${selectedHand.value || 'None'} → ${hand}`);
-    selectedHand.value = hand;
-  },
 
-  toggleClub(club) {
+// ================================
+// PERSISTENCE EFFECT
+// ================================
+
+let persistenceTimeout;
+
+function persistState() {
+  if (!APP_CONFIG.PERSISTENCE.enabled) return;
+
+  clearTimeout(persistenceTimeout);
+  persistenceTimeout = setTimeout(() => {
+    const currentState = {
+      selectedHand: selectedHand.value,
+      selectedClubs: selectedClubs.value,
+      selectedShafts: selectedShafts.value,
+      selectedGrip: selectedGrip.value,
+      selectedLie: selectedLie.value,
+      // New shaft fields
+      selectedShaftBrand: selectedShaftBrand.value,
+      selectedShaftFlex: selectedShaftFlex.value,
+      selectedShaftLength: selectedShaftLength.value,
+    };
+
+    PersistenceManager.saveState(currentState);
+  }, APP_CONFIG.PERSISTENCE.debounceMs);
+}
+
+if (APP_CONFIG.PERSISTENCE.enabled) {
+  effect(() => {
+    selectedHand.value;
+    selectedClubs.value;
+    selectedShafts.value;
+    selectedGrip.value;
+    selectedLie.value;
+    // New shaft signals
+    selectedShaftBrand.value;
+    selectedShaftFlex.value;
+    selectedShaftLength.value;
+    persistState();
+  });
+}
+
+// ================================
+// VALIDATION HELPERS
+// ================================
+
+function validateClubSelection(clubs) {
+  const clubIds = clubs.map(c => c.id);
+
+  if (clubs.length < APP_CONFIG.BUSINESS.minClubCount) {
+    return { valid: false, reason: `Minimum ${APP_CONFIG.BUSINESS.minClubCount} clubs required` };
+  }
+
+  if (clubs.length > APP_CONFIG.BUSINESS.maxClubCount) {
+    return { valid: false, reason: `Maximum ${APP_CONFIG.BUSINESS.maxClubCount} clubs allowed` };
+  }
+
+  for (const requiredId of APP_CONFIG.BUSINESS.requiredClubs) {
+    if (!clubIds.includes(requiredId)) {
+      return { valid: false, reason: `Required club ${requiredId} missing` };
+    }
+  }
+
+  if (clubIds.includes('4') && !clubIds.includes('5')) {
+    return { valid: false, reason: 'Selecting 4-iron requires 5-iron' };
+  }
+
+  return { valid: true };
+}
+
+function safeAction(actionName, actionFn) {
+  return async (...args) => {
+    try {
+      Logger.debug(`ACTION: ${actionName}`);
+      const result = await actionFn(...args);
+      return result;
+    } catch (err) {
+      Logger.error(`ACTION: ${actionName} failed`, err);
+      error.value = err.message || `${actionName} failed`;
+      return false;
+    }
+  };
+}
+
+// ================================
+// ACTIONS
+// ================================
+
+export const actions = {
+  setHand: safeAction('setHand', (hand) => {
+    if (!hand) throw new Error('Invalid hand selection');
+    Logger.info(`Hand: ${selectedHand.value || 'None'} → ${hand}`);
+    selectedHand.value = hand;
+    error.value = null;
+    return true;
+  }),
+
+  toggleClub: safeAction('toggleClub', (club) => {
+    if (!club?.id) throw new Error('Invalid club object');
+
     const currentlySelected = selectedClubs.value;
     const isSelected = currentlySelected.some((c) => c.id === club.id);
 
-    console.log(`🏌️ USER SELECTION: Club toggle attempted`);
-    console.log(`   🏏 Club: ${club.name} (${club.id})`);
-    console.log(
-      `   📊 Current selection: [${currentlySelected.map((c) => c.id).join(', ')}] (${currentlySelected.length} clubs)`
-    );
-    console.log(`   📋 Available clubs: [${availableClubs.value.map((c) => c.id).join(', ')}]`);
-    console.log(`   🎯 Action: ${isSelected ? 'Remove' : 'Add'} club`);
-
+    let newSelection;
     if (isSelected) {
-      // Prevent removing if it would go below minimum
-      if (currentlySelected.length <= 5 && !club.isOptional) {
-        console.log('❌ SELECTION BLOCKED: Cannot remove required club - minimum 5 clubs needed');
-        console.log(`   ⚠️ Current count: ${currentlySelected.length}, minimum: 5`);
-        console.log(`   🔒 Club type: ${club.isOptional ? 'Optional' : 'Required'}`);
-        return false;
-      }
-
-      selectedClubs.value = currentlySelected.filter((c) => c.id !== club.id);
-      console.log(`➖ SELECTION APPLIED: Removed club "${club.name}"`);
-      console.log(
-        `   📊 New selection: [${selectedClubs.value.map((c) => c.id).join(', ')}] (${
-          selectedClubs.value.length
-        } clubs)`
-      );
+      newSelection = currentlySelected.filter((c) => c.id !== club.id);
     } else {
-      selectedClubs.value = [...currentlySelected, club];
-      console.log(`➕ SELECTION APPLIED: Added club "${club.name}"`);
-      console.log(
-        `   📊 New selection: [${selectedClubs.value.map((c) => c.id).join(', ')}] (${
-          selectedClubs.value.length
-        } clubs)`
-      );
+      newSelection = [...currentlySelected, club];
+
+      // 4-iron rule: auto-add 5-iron if not present
+      if (club.id === '4') {
+        const has5Iron = newSelection.some(c => c.id === '5');
+        if (!has5Iron) {
+          const ironClub5 = availableClubs.value.find(c => c.id === '5');
+          if (ironClub5) newSelection.push(ironClub5);
+        }
+      }
     }
 
-    // Log the computed iron set type
-    console.log(`🎯 COMPUTED SET TYPE: ${ironSetType.value} (${selectedClubs.value.length} clubs)`);
-    return true;
-  },
+    const validation = validateClubSelection(newSelection);
+    if (!validation.valid) {
+      Logger.warn(`Club selection blocked: ${validation.reason}`);
+      error.value = validation.reason;
+      return false;
+    }
 
-  selectShaft(clubId, shaftId) {
-    console.log(`🔧 USER SELECTION: Shaft selection changed`);
-    console.log(`   🏏 Club ID: ${clubId}`);
-    console.log(`   🔧 Previous shaft: ${selectedShafts.value[clubId] || 'None'}`);
-    console.log(`   🔧 Selected shaft ID: ${shaftId}`);
-    console.log(`   📊 Current shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs have shafts');
+    selectedClubs.value = newSelection;
+    error.value = null;
+    Logger.info(`Clubs: [${newSelection.map(c => c.id).join(', ')}] (${newSelection.length})`);
+    return true;
+  }),
+
+  selectShaft: safeAction('selectShaft', (clubId, shaftId) => {
+    if (!clubId || !shaftId) throw new Error('Club ID and shaft ID required');
 
     selectedShafts.value = {
       ...selectedShafts.value,
       [clubId]: shaftId,
     };
+    return true;
+  }),
 
-    console.log(`✅ SELECTION APPLIED: Shaft set for club ${clubId}`);
-    console.log(`   📊 Updated shaft selections:`, Object.keys(selectedShafts.value).length, 'clubs now have shafts');
-  },
+  setGrip: safeAction('setGrip', (brand, model, size) => {
+    if (!brand) throw new Error('Grip brand required');
 
-  setGrip(brand, model, size) {
-    console.log(`🤲 USER SELECTION: Grip selection changed`);
-    console.log(
-      `   🔧 Previous grip: ${
-        selectedGrip.value
-          ? `${selectedGrip.value.brand} ${selectedGrip.value.model || ''} ${selectedGrip.value.size || ''}`
-          : 'None'
-      }`
-    );
-    console.log(`   🔧 Selected grip: ${brand} ${model || ''} ${size || ''}`);
-    selectedGrip.value = { brand, model, size };
-    console.log(`✅ SELECTION APPLIED: Grip set to "${brand} ${model || ''} ${size || ''}"`);
-  },
+    selectedGrip.value = { brand, model: model || '', size: size || '' };
+    return true;
+  }),
 
-  setLie(lie) {
-    console.log(`📐 USER SELECTION: Lie changed from "${selectedLie.value}" to "${lie}"`);
+  setLie: safeAction('setLie', (lie) => {
+    if (!lie) throw new Error('Lie adjustment required');
+
     selectedLie.value = lie;
-    console.log(`✅ SELECTION APPLIED: Lie set to "${lie}"`);
-  },
+    return true;
+  }),
 
-  async loadShaftOptions(brandName) {
-    console.log(`🚀 API REQUEST: Loading shaft options for brand "${brandName}"`);
-    const availableBrands = await shaftService.getAvailableBrands();
-    console.log(`   📊 Available brands: ${availableBrands.join(', ')}`);
+  // New clean shaft actions - direct signal updates
+  setShaftBrand: safeAction('setShaftBrand', async (brand) => {
+    if (!brand) throw new Error('Shaft brand required');
+
+    Logger.info(`Shaft brand: ${selectedShaftBrand.value || 'None'} → ${brand}`);
+    selectedShaftBrand.value = brand;
+    selectedShaftFlex.value = ''; // Reset flex when brand changes
+    error.value = null;
+    return true;
+  }),
+
+  setShaftFlex: safeAction('setShaftFlex', (flex) => {
+    if (!flex) throw new Error('Shaft flex required');
+
+    Logger.info(`Shaft flex: ${selectedShaftFlex.value || 'None'} → ${flex}`);
+    selectedShaftFlex.value = flex;
+    error.value = null;
+    return true;
+  }),
+
+  setShaftLength: safeAction('setShaftLength', (length) => {
+    if (!length) throw new Error('Shaft length required');
+
+    Logger.info(`Shaft length: ${selectedShaftLength.value || 'None'} → ${length}`);
+    selectedShaftLength.value = length;
+    error.value = null;
+    return true;
+  }),
+
+  loadShaftOptions: safeAction('loadShaftOptions', async (brandName) => {
+    if (!brandName) throw new Error('Brand name required');
+
     isLoading.value = true;
     error.value = null;
 
     try {
       const options = await shaftService.loadShaftOptions(brandName);
-      console.log(`✅ OPTIONS LOADED: ${options.length} shaft options available for "${brandName}"`);
-      console.group('📋 Shaft Options Summary:');
-      options.forEach((option, i) => {
-        console.log(
-          `${i + 1}. ${option.title} - £${(option.price / 100).toFixed(2)} (${
-            option.available ? 'Available' : 'Out of Stock'
-          })`
-        );
-      });
-      console.groupEnd();
+      Logger.info(`Loaded ${options.length} shaft options for ${brandName}`);
       return options;
-    } catch (err) {
-      console.error(`❌ API ERROR: Failed to load shaft options for "${brandName}":`, err);
-      error.value = err.message;
-      return [];
     } finally {
       isLoading.value = false;
     }
-  },
+  }),
 
-  async addToCart() {
+  addToCart: safeAction('addToCart', async () => {
     if (!canAddToCart.value) {
-      console.warn('❌ Cannot add to cart - missing required selections');
-      return false;
+      throw new Error('Cannot add to cart - missing required selections');
     }
 
-    if (selectedClubs.value.length < 5) {
-      error.value = 'Please select at least 5 clubs first!';
-      return false;
-    }
-
-    console.log('🛒 Starting add to cart process...');
     isLoading.value = true;
     error.value = null;
 
     try {
-      // Get the iron variant based on computed iron set type
       const setType = ironSetType.value;
-      console.log('🏌️ DEBUG: Iron set type:', setType);
-
       const ironVariant = await productService.findVariantBySetSize(setType, selectedHand.value);
+
       if (!ironVariant) {
-        throw new Error('Iron variant not found for selected configuration!');
+        throw new Error('Iron variant not found for selected configuration');
       }
 
-      console.log('🏌️ Using iron variant ID:', ironVariant.id);
-      console.log('🏌️ Iron variant info:', ironVariant);
-
-      // Generate unique bundle ID (like vanilla)
       const bundleId = `golf-${Date.now()}`;
-      console.log('🎯 Generated bundleId:', bundleId);
-
-      // Get parent variant ID from theme settings (for cart transformer)
       const parentVariantId = await getParentVariantIdFromThemeSettings();
-      console.log('🎯 Parent variant ID for cart transformer:', parentVariantId);
 
-      // Prepare cart add data - Real Product Approach matching cart transformer
-      const cartItems = [
-        {
-          id: ironVariant.id, // Use actual iron variant ID
-          quantity: 1,
-          properties: {
-            bundleId: bundleId,
-            parentVariantId: parentVariantId,
-            hand: selectedHand.value,
-            setSize: ironSetType.value,
-            clubList: JSON.stringify(selectedClubs.value.map((club) => club.id)), // Note: changed to clubList to match transformer
-            // Add shaft properties if selected
-            ...(selectedShafts.value &&
-              Object.keys(selectedShafts.value).length > 0 && {
-                shaft_variant_id: Object.values(selectedShafts.value)[0],
-                shaftName: 'Selected Shaft', // Note: changed to shaftName to match transformer
-              }),
-            // Add grip properties
-            ...(selectedGrip.value && {
-              grip: `${selectedGrip.value.brand} ${selectedGrip.value.size}`,
-            }),
-            lie: selectedLie.value,
-          },
+      const cartItems = [{
+        id: ironVariant.id,
+        quantity: 1,
+        properties: {
+          bundleId,
+          parentVariantId,
+          hand: selectedHand.value,
+          setSize: ironSetType.value,
+          clubList: JSON.stringify(selectedClubs.value.map((club) => club.id)),
+          ...(selectedShafts.value && Object.keys(selectedShafts.value).length > 0 && {
+            shaft_variant_id: Object.values(selectedShafts.value)[0],
+            shaftName: 'Selected Shaft',
+          }),
+          ...(selectedGrip.value && {
+            grip: `${selectedGrip.value.brand} ${selectedGrip.value.size}`,
+          }),
+          lie: selectedLie.value,
         },
-      ];
+      }];
 
-      // Add shaft as separate line item if selected (like vanilla)
       if (selectedShafts.value && Object.keys(selectedShafts.value).length > 0) {
         const shaftVariantId = Object.values(selectedShafts.value)[0];
         const clubCount = selectedClubs.value.length;
-        console.log('🏌️ Adding shaft as separate line item:', shaftVariantId);
 
         cartItems.push({
-          id: shaftVariantId, // Use actual shaft variant ID
-          quantity: clubCount, // One shaft per club
+          id: shaftVariantId,
+          quantity: clubCount,
           properties: {
-            bundleId: bundleId, // Same bundle ID to group with iron set
-            componentType: 'shaft', // Note: changed to componentType to match transformer
-            shaftBrand: 'Selected Shaft', // Note: changed to shaftBrand to match transformer
-            clubCount: clubCount.toString(), // Note: changed to clubCount to match transformer
+            bundleId,
+            componentType: 'shaft',
+            shaftBrand: 'Selected Shaft',
+            clubCount: clubCount.toString(),
           },
         });
-        console.log('🏌️ Shaft item added with quantity:', clubCount);
       }
 
       const cartData = { items: cartItems };
 
-      console.log('🏌️ Adding to cart with bundleId:', bundleId);
-      console.log('🏌️ Full cart data:', cartData);
+      if (APP_CONFIG.DATA.useRealData) {
+        const response = await fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(cartData),
+        });
 
-      // Mock cart API in development
-      if (isDevelopment) {
-        console.log('🧪 Mock: Simulating cart add...');
-        console.log('🛒 Mock: Cart data would be:', cartData);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        console.log('✅ Mock: Added to cart successfully');
-        console.log('🎯 Mock: Cart item added with bundleId:', bundleId);
-        console.log('⚡ Mock: Cart transformer would process this item...');
-        return true;
-      }
-
-      // Real Shopify cart API for production
-      const response = await fetch('/cart/add.js', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(cartData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Added to cart successfully:', result);
-        console.log('🎯 Cart item added with bundleId:', bundleId);
-        console.log('⚡ Cart transformer should now process this item...');
-        return true;
+        if (response.ok) {
+          const result = await response.json();
+          Logger.info('Added to cart successfully', result);
+          return true;
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || errorData.description || 'Failed to add to cart');
+        }
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.description || 'Failed to add to cart');
+        await new Promise(resolve => setTimeout(resolve, APP_CONFIG.DATA.mockApiDelay));
+        Logger.info('Mock: Added to cart successfully');
+        return true;
       }
-    } catch (err) {
-      console.error('❌ Cart error:', err);
-      error.value = err.message;
-      return false;
     } finally {
       isLoading.value = false;
     }
-  },
+  }),
 
-  reset() {
-    console.log('🔄 Resetting configurator state');
-    selectedHand.value = null;
+  reset: safeAction('reset', () => {
+    selectedHand.value = DEFAULT_STATE_VALUES.selectedHand;
     selectedClubs.value = [...DEFAULT_CLUBS];
-    selectedShafts.value = {};
-    selectedGrip.value = null;
-    selectedLie.value = 'Standard';
+    selectedShafts.value = {...DEFAULT_STATE_VALUES.selectedShafts};
+    selectedGrip.value = DEFAULT_STATE_VALUES.selectedGrip;
+    selectedLie.value = APP_CONFIG.BUSINESS.defaultLie;
+    selectedShaftBrand.value = DEFAULT_STATE_VALUES.selectedShaftBrand;
+    selectedShaftFlex.value = DEFAULT_STATE_VALUES.selectedShaftFlex;
+    selectedShaftLength.value = DEFAULT_STATE_VALUES.selectedShaftLength;
     error.value = null;
-  },
+    return true;
+  }),
 };
 
-// Debug logging (matches vanilla JS)
+// ================================
+// UTILITIES
+// ================================
+
+
+export const USE_REAL_DATA = APP_CONFIG.DATA.useRealData;
+
+// Export Logger for components
+export { Logger };
+
+// ================================
+// INITIALIZATION
+// ================================
+
 if (typeof window !== 'undefined') {
-  window.golfConfiguratorState = {
-    selectedHand,
-    selectedClubs,
-    ironSetType,
-    selectedShafts,
-    selectedGrip,
-    selectedLie,
-    canAddToCart,
-    isLoading,
-    error,
-    actions,
-  };
+  if (APP_CONFIG.FEATURES.stateDebug) {
+    window.golfConfiguratorState = {
+      // Core state
+      selectedHand,
+      selectedClubs,
+      selectedShafts, // Legacy
+      selectedGrip,
+      selectedLie,
 
-  // Comprehensive initialization summary
-  console.log('🏌️ Golf Configurator State initialized with Preact signals');
-  console.log('🔧 DATA SOURCE:', USE_REAL_DATA ? 'Real Shopify Data' : 'Mock Data');
-  console.log('🌍 ENVIRONMENT:', isDevelopment ? 'Development' : 'Production');
+      // New shaft state
+      selectedShaftBrand,
+      selectedShaftFlex,
+      selectedShaftLength,
 
-  console.group('📊 INITIAL STATE SUMMARY:');
-  console.log('👈👉 Hand options:', handOptions.value.map((h) => h.name).join(', '));
-  console.log(
-    '🏏 Available clubs:',
-    availableClubs.value.map((c) => `${c.name} (${c.isRequired ? 'Required' : 'Optional'})`)
-  );
-  console.log('🎯 Default selection:', selectedClubs.value.map((c) => c.name).join(', '));
-  console.log('💰 Iron set prices: Available from product service (real Shopify data)');
-  shaftService.getAvailableBrands().then((brands) => {
-    console.log('🔧 Available shaft brands:', brands.join(', '));
-  });
-  console.groupEnd();
+      // Computed
+      ironSetType,
+      canAddToCart,
 
-  console.log('🐛 Debug: window.golfConfiguratorState available');
-  console.log('🐛 Debug: Access current state via window.golfConfiguratorState');
+      // Actions
+      actions,
+    };
+  }
+
+  Logger.info('🏌️ Golf Configurator initialized');
+  Logger.info(`🔧 Mode: ${APP_CONFIG.ENV.isDevelopment ? 'Development' : 'Production'}`);
+
+  if (APP_CONFIG.PERSISTENCE.enabled) {
+    Logger.info('💾 State persistence enabled');
+  }
 }

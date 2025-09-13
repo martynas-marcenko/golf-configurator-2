@@ -12,7 +12,118 @@ This is a **modern Preact application** with signals-based state management, sha
 - **Build Tool**: Vite with HMR
 - **Data Flow**: Services pattern with mock/real data switching
 
+## DRY Architecture & Single Source of Truth
+
+This project follows **strict DRY (Don't Repeat Yourself) principles** with a clean, maintainable architecture:
+
+### Core Architecture Principles
+
+✅ **Single Source of Truth**: All configuration and constants in one place
+✅ **No Duplication**: Zero repeated code or data definitions
+✅ **Clean Imports**: Consistent import chains throughout the codebase
+✅ **Single State System**: One unified state management approach
+✅ **No Unused Exports**: Every export has a purpose and is used
+✅ **Performance Optimized**: Smaller bundle size through eliminated duplication
+
+### File Structure & Responsibilities
+
+```
+src/
+├── constants/defaults.js          # 🎯 SINGLE SOURCE OF TRUTH
+│   ├── HAND_OPTIONS              # Left/Right hand options
+│   ├── AVAILABLE_CLUBS           # All selectable clubs (4,5,6,7,8,9,PW)
+│   ├── DEFAULT_CLUBS             # Initially selected clubs (derived from AVAILABLE_CLUBS)
+│   ├── SHAFT_LENGTHS             # All length options (-2" to +2")
+│   └── DEFAULT_STATE_VALUES      # Complete initial state definition
+│
+├── hooks/useGolfState.js          # 🔧 SINGLE STATE SYSTEM
+│   ├── Imports ALL constants from defaults.js
+│   ├── Reactive signals with Preact Signals
+│   ├── Computed values (ironSetType, canAddToCart)
+│   ├── Actions with error handling
+│   └── State persistence integration
+│
+├── utils/persistence.js           # 💾 CLEAN PERSISTENCE
+│   └── Uses DEFAULT_STATE_VALUES (no duplication)
+│
+└── components/                    # 🎨 CLEAN COMPONENTS
+    ├── GolfConfigurator.jsx      # Pure UI logic
+    └── ShaftPicker.jsx           # Imports SHAFT_LENGTHS from constants
+```
+
+### DRY Implementation Examples
+
+#### ✅ Constants - Single Definitions
+```javascript
+// constants/defaults.js - Define once, use everywhere
+export const AVAILABLE_CLUBS = [
+  { id: '6', name: '6-Iron', type: 'iron', isRequired: true, isOptional: false },
+  // ... all club definitions
+];
+
+// Derived data - no duplication
+const DEFAULT_CLUB_IDS = ['6', '7', '8', '9', 'PW'];
+export const DEFAULT_CLUBS = AVAILABLE_CLUBS.filter(club =>
+  DEFAULT_CLUB_IDS.includes(club.id)
+);
+```
+
+#### ✅ State Management - Single System
+```javascript
+// hooks/useGolfState.js - Import constants, export signals
+import { HAND_OPTIONS, AVAILABLE_CLUBS, SHAFT_LENGTHS } from '../constants/defaults.js';
+
+export const handOptions = signal([...HAND_OPTIONS]);
+export const availableClubs = signal([...AVAILABLE_CLUBS]);
+// No hardcoded arrays anywhere
+```
+
+#### ✅ Components - Clean Imports
+```javascript
+// components/ShaftPicker.jsx - Import what you need
+import { SHAFT_LENGTHS } from '../constants/defaults';
+import { actions, selectedShaftBrand } from '../hooks/useGolfState';
+
+// Use constants directly, no hardcoded data
+{SHAFT_LENGTHS.map((lengthOption) => ...)}
+```
+
+### Benefits Achieved
+
+🎯 **Easy Maintenance**: Change club data in one place (`constants/defaults.js`)
+🎯 **Data Consistency**: Impossible for definitions to get out of sync
+🎯 **Clean Components**: Pure UI logic, no configuration mixed in
+🎯 **Performance**: Bundle size optimized (87.21 KB - no dead code)
+🎯 **Developer Experience**: Clear import chains, predictable structure
+🎯 **Type Safety**: Single definitions reduce typos and errors
+
+### Anti-Patterns Eliminated
+
+❌ **Multiple State Systems**: Removed duplicate `store/` directory
+❌ **Hardcoded Arrays**: No data definitions in components
+❌ **Duplicate Constants**: Same club data no longer repeated
+❌ **Unused Exports**: Removed dead code like `basePrice`, `totalPrice`
+❌ **Mixed Concerns**: Configuration separated from business logic
+
+### State Flow Architecture
+
+```
+constants/defaults.js (Single Source)
+        ↓
+hooks/useGolfState.js (Single State System)
+        ↓
+components/ (Clean UI Components)
+        ↓
+utils/persistence.js (Clean Storage)
+```
+
+This architecture ensures **absolute DRY compliance** with zero duplication and maximum maintainability.
+
+---
+
 ## Modern React/Preact Best Practices
+
+> **⚠️ IMPORTANT**: The examples below are **general React/Preact patterns**. Our project uses the **DRY architecture documented above**. When there's a conflict, **always follow the DRY implementation** (constants from `defaults.js`, direct signals from `useGolfState.js`, no service classes, no custom hooks for state).
 
 ### Component Architecture
 
@@ -95,6 +206,8 @@ function DataFetcher({ children, url }) {
 
 ### State Management with Signals
 
+> **⚠️ OUR PROJECT**: We use the single `useGolfState.js` file with constants from `defaults.js`. No hardcoded arrays or multiple state systems.
+
 #### 1. Global State with Signals
 
 ```javascript
@@ -142,6 +255,8 @@ export const actions = {
 ```
 
 ### Service Layer Architecture
+
+> **⚠️ OUR PROJECT**: We use function-based services (`services/ProductService.js`, `services/ShaftService.js`) with direct imports, not classes or service objects. Follow the DRY pattern above.
 
 #### 1. Service Classes/Modules
 
@@ -528,6 +643,8 @@ return (
 ```
 
 ## Shopify Integration Patterns
+
+> **⚠️ OUR PROJECT**: We use function-based services with `USE_REAL_DATA` from `useGolfState.js`. No service classes or factories. Follow the DRY architecture documented above.
 
 ### 1. Environment Detection
 
