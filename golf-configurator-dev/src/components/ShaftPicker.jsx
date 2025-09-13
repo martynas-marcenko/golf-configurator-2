@@ -9,7 +9,6 @@ export function ShaftPicker() {
   // State for shaft configuration
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedFlex, setSelectedFlex] = useState('');
-  const [selectedLie, setSelectedLie] = useState('Standard');
   const [selectedLength, setSelectedLength] = useState('Standard');
 
   // State for real Shopify data
@@ -17,11 +16,6 @@ export function ShaftPicker() {
   const [loadingShafts, setLoadingShafts] = useState(false);
   const [availableBrands, setAvailableBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(true);
-
-  console.log('🎯 UI DEBUG: ShaftPicker component rendered');
-  console.log('🎯 UI DEBUG: Current selectedBrand state:', selectedBrand);
-  console.log('🎯 UI DEBUG: Current shaftOptions length:', shaftOptions.length);
-  console.log('🎯 UI DEBUG: Loading state:', loadingShafts);
 
   // Load available brands on mount
   useEffect(() => {
@@ -66,15 +60,12 @@ export function ShaftPicker() {
     '+2"',
   ];
 
-  const lieAdjustments = ['2.0 Deg Up', '1.0 Deg Up', 'Standard', '1.0 Deg Flat', '2.0 Deg Flat'];
-
   const handleBrandChange = async (brand) => {
     console.log('🎯 UI DEBUG: handleBrandChange called with brand:', brand);
     console.log('🎯 UI DEBUG: Previous selectedBrand was:', selectedBrand);
 
     setSelectedBrand(brand);
-    setSelectedFlex(''); // Reset flex when brand changes
-    setSelectedLie('Standard');
+    setSelectedFlex('');
     console.log('🎯 UI DEBUG: setSelectedBrand called with:', brand);
 
     if (!brand) {
@@ -172,7 +163,6 @@ export function ShaftPicker() {
         )}
       </div>
 
-      {/* Flex Selection - Using Real Shopify Data */}
       {selectedBrand && shaftOptions.length > 0 && !loadingShafts && (
         <div className='mb-6'>
           <h2 className='mb-3 text-base font-bold text-foreground'>Select Flex</h2>
@@ -231,7 +221,6 @@ export function ShaftPicker() {
         </div>
       )}
 
-      {/* Shaft Length Selection */}
       {selectedBrand && shaftOptions.length > 0 && !loadingShafts && (
         <div className='mb-6'>
           <h2 className='mb-3 text-base font-bold text-foreground'>Select Shaft Length</h2>
@@ -257,7 +246,6 @@ export function ShaftPicker() {
         </div>
       )}
 
-      {/* No Shafts Available */}
       {selectedBrand && shaftOptions.length === 0 && !loadingShafts && (
         <div className='mb-6 p-4 border border-yellow-200 bg-yellow-50 rounded-lg'>
           <div className='flex items-center text-yellow-800'>
