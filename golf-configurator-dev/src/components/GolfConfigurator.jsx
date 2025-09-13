@@ -3,7 +3,6 @@ import { Button } from './ui/button';
 import { ChevronRight, Check } from 'lucide-react';
 import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Tooltip } from './ui/tooltip';
-import { Toast } from './Toast';
 import { ShaftPicker } from './ShaftPicker';
 import {
   selectedHand,
@@ -676,8 +675,6 @@ export function GolfConfigurator() {
           </button>
         </div>
 
-        {/* Toast Notifications */}
-        <Toast />
       </div>
     </div>
   );
