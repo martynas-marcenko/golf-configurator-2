@@ -7,7 +7,7 @@ import { ShaftPicker } from './ShaftPicker';
 import {
   selectedHand,
   selectedClubs,
-  selectedShafts,
+  selectedShaftBrand,
   selectedShaftFlex,
   selectedShaftLength,
   selectedGrip,
@@ -18,7 +18,7 @@ import {
   actions,
   error,
   isLoading,
-} from '../hooks/useGolfState';
+} from '../store/golfStore';
 import * as productService from '../services/ProductService';
 import { cn } from '../lib/utils';
 
@@ -66,10 +66,9 @@ export function GolfConfigurator() {
     // Default lead time if no shafts selected
     const defaultLeadTime = '2 weeks';
 
-    // Get selected shaft brands from ShaftService/data
-    const selectedShaftIds = Object.values(selectedShafts.value);
-    if (selectedShaftIds.length === 0) {
-      return defaultLeadTime;
+    // Use selected shaft brand to determine lead time
+    if (selectedShaftBrand.value && shaftLeadTimes[selectedShaftBrand.value]) {
+      return shaftLeadTimes[selectedShaftBrand.value];
     }
 
     // For now, use KBS as the example since that's what's in the mockup

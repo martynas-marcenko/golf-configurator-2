@@ -3,7 +3,8 @@
  * Handles product data fetching with centralized mock data
  */
 
-import { USE_REAL_DATA } from '../hooks/useGolfState';
+import APP_CONFIG from '../config/app.js';
+const USE_REAL_DATA = APP_CONFIG.DATA.useRealData;
 import mockData from '../mocks/shopify-data.json';
 import { getBundleParentProductHandle } from '../utils/dataAttributes.js';
 

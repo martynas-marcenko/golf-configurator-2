@@ -219,4 +219,54 @@ export class Logger {
   }
 }
 
+// ================================
+// STATE PERSISTENCE EFFECTS
+// ================================
+
+import { effect } from '@preact/signals';
+import APP_CONFIG from '../config/app.js';
+
+/**
+ * Sets up automatic state persistence with debouncing
+ * @param {Object} stateSignals - Object containing all state signals to watch
+ */
+export function setupStatePersistence(stateSignals) {
+  if (!APP_CONFIG.PERSISTENCE.enabled) return;
+
+  let persistenceTimeout;
+
+  function persistState() {
+    clearTimeout(persistenceTimeout);
+    persistenceTimeout = setTimeout(() => {
+      const currentState = {
+        selectedHand: stateSignals.selectedHand.value,
+        selectedClubs: stateSignals.selectedClubs.value,
+        selectedGrip: stateSignals.selectedGrip.value,
+        selectedLie: stateSignals.selectedLie.value,
+        selectedShaftBrand: stateSignals.selectedShaftBrand.value,
+        selectedShaftFlex: stateSignals.selectedShaftFlex.value,
+        selectedShaftLength: stateSignals.selectedShaftLength.value,
+      };
+
+      PersistenceManager.saveState(currentState);
+    }, APP_CONFIG.PERSISTENCE.debounceMs);
+  }
+
+  // Setup effect to watch all state signals
+  effect(() => {
+    // Access all signals to create dependencies
+    stateSignals.selectedHand.value;
+    stateSignals.selectedClubs.value;
+    stateSignals.selectedGrip.value;
+    stateSignals.selectedLie.value;
+    stateSignals.selectedShaftBrand.value;
+    stateSignals.selectedShaftFlex.value;
+    stateSignals.selectedShaftLength.value;
+
+    persistState();
+  });
+
+  Logger.info('💾 State persistence effects enabled');
+}
+
 export { PersistenceManager, DEFAULT_STATE, STORAGE_KEY };

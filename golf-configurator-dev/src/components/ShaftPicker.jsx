@@ -8,7 +8,7 @@ import {
   selectedShaftLength,
   isLoading,
   Logger
-} from '../hooks/useGolfState';
+} from '../store/golfStore';
 import { SHAFT_LENGTHS } from '../constants/defaults';
 import * as shaftService from '../services/ShaftService';
 import { cn } from '../lib/utils';
