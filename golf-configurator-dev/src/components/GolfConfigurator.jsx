@@ -8,6 +8,8 @@ import {
   selectedHand,
   selectedClubs,
   selectedShafts,
+  selectedShaftFlex,
+  selectedShaftLength,
   selectedGrip,
   selectedLie,
   handOptions,
@@ -57,7 +59,6 @@ const shaftLeadTimes = {
  * Updated with new step-based UI design
  */
 export function GolfConfigurator() {
-
   const [currentStep, setCurrentStep] = useState(0);
 
   // Get current lead time based on selected shafts
@@ -352,9 +353,6 @@ export function GolfConfigurator() {
                     {selectedClubs.value.length} {selectedClubs.value.length === 1 ? 'club' : 'clubs'} selected
                   </span>
                 </div>
-                <p className='text-sm text-muted-foreground'>
-                  6-PW are required and included. Optional: 4 & 5 irons. Selecting 4 requires 5.
-                </p>
               </div>
 
               <div className='grid grid-cols-7 gap-3'>
@@ -497,14 +495,14 @@ export function GolfConfigurator() {
             )}
 
             {/* Grip Size Selection */}
-            {selectedGrip.value?.brand && selectedGrip.value?.model && (
+            {selectedGrip.value?.brand && (
               <div className='mb-6'>
                 <h2 className='mb-3 text-base font-bold text-foreground'>Select Grip Size</h2>
                 <SelectRoot
                   value={selectedGrip.value?.size || ''}
                   onValueChange={(size) => {
-                    if (selectedGrip.value?.brand && selectedGrip.value?.model) {
-                      actions.setGrip(selectedGrip.value.brand, selectedGrip.value.model, size);
+                    if (selectedGrip.value?.brand) {
+                      actions.setGrip(selectedGrip.value.brand, selectedGrip.value?.model || '', size);
                     }
                   }}
                 >
@@ -614,7 +612,7 @@ export function GolfConfigurator() {
           className={cn(
             'mb-4 w-full h-12 text-base font-medium rounded-full transition-all duration-200',
             (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) ||
-              currentStep === 1 ||
+              (currentStep === 1 && selectedShaftFlex.value && selectedShaftLength.value) ||
               (currentStep === 2 &&
                 selectedGrip.value?.brand &&
                 selectedGrip.value?.model &&
@@ -626,6 +624,7 @@ export function GolfConfigurator() {
           onClick={handleNext}
           disabled={
             (currentStep === 0 && (!selectedHand.value || selectedClubs.value.length < 5)) ||
+            (currentStep === 1 && (!selectedShaftFlex.value || !selectedShaftLength.value)) ||
             (currentStep === 2 &&
               (!selectedGrip.value?.brand || !selectedGrip.value?.model || !selectedGrip.value?.size)) ||
             (currentStep === 3 && !canAddToCart.value) ||
@@ -658,7 +657,6 @@ export function GolfConfigurator() {
             Reset
           </button>
         </div>
-
       </div>
     </div>
   );

@@ -208,10 +208,7 @@ export function ShaftPicker() {
                 <SelectContent open={open}>
                   {SHAFT_LENGTHS.map((lengthOption) => (
                     <SelectItem key={lengthOption} value={lengthOption} selected={value === lengthOption} onValueChange={onValueChange}>
-                      <div className='flex items-center justify-between w-full'>
-                        <span>{lengthOption}</span>
-                        {lengthOption === 'Standard' && <Check className='h-4 w-4 text-black' />}
-                      </div>
+                      <span>{lengthOption}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
