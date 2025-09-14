@@ -6,7 +6,13 @@
 import { signal, computed } from '@preact/signals';
 import { DEFAULT_STATE_VALUES, DEFAULT_CLUBS, HAND_OPTIONS, AVAILABLE_CLUBS } from '../constants/defaults.js';
 import { PersistenceManager, Logger, setupStatePersistence } from '../utils/persistence.js';
-import { safeAction, validateClubSelection, applyClubSelectionRules } from '../utils/validation.js';
+import {
+  safeAction,
+  validateClubSelection,
+  applyClubSelectionRules,
+  handleClubToggle,
+  getMaxUnlockedStep
+} from '../utils/validation.js';
 import { addGolfConfigurationToCart } from '../services/CartService.js';
 import * as shaftService from '../services/ShaftService.js';
 import APP_CONFIG from '../config/app.js';
@@ -73,6 +79,17 @@ export const canAddToCart = computed(() => {
   );
 });
 
+export const maxUnlockedStep = computed(() => {
+  return getMaxUnlockedStep({
+    selectedHand: selectedHand.value,
+    selectedClubs: selectedClubs.value,
+    selectedShaftBrand: selectedShaftBrand.value,
+    selectedShaftFlex: selectedShaftFlex.value,
+    selectedShaftLength: selectedShaftLength.value,
+    selectedGrip: selectedGrip.value,
+  });
+});
+
 // ================================
 // CORE ACTIONS - Pure State Updates with Validation
 // ================================
@@ -89,27 +106,51 @@ export const actions = {
   toggleClub: safeAction('toggleClub', (club) => {
     if (!club?.id) throw new Error('Invalid club object');
 
-    const currentlySelected = selectedClubs.value;
-    const isSelected = currentlySelected.some((c) => c.id === club.id);
+    const currentSelection = selectedClubs.value;
+    const result = handleClubToggle(club.id, currentSelection, availableClubs.value);
 
-    let newSelection;
-    if (isSelected) {
-      newSelection = currentlySelected.filter((c) => c.id !== club.id);
-    } else {
-      // Apply business rules when adding club
-      newSelection = applyClubSelectionRules(currentlySelected, club, availableClubs.value);
+    if (!result.success) {
+      Logger.warn(`Club toggle blocked: ${result.reason}`);
+      error.value = result.reason;
+      return false;
     }
 
-    const validation = validateClubSelection(newSelection);
+    const validation = validateClubSelection(result.newSelection);
     if (!validation.valid) {
       Logger.warn(`Club selection blocked: ${validation.reason}`);
       error.value = validation.reason;
       return false;
     }
 
-    selectedClubs.value = newSelection;
+    selectedClubs.value = result.newSelection;
     error.value = null;
-    Logger.info(`Clubs: [${newSelection.map(c => c.id).join(', ')}] (${newSelection.length})`);
+    Logger.info(`Clubs: [${result.newSelection.map(c => c.id).join(', ')}] (${result.newSelection.length})`);
+    return true;
+  }),
+
+  // Enhanced club toggle by number (for component use)
+  toggleClubByNumber: safeAction('toggleClubByNumber', (clubNumber) => {
+    if (!clubNumber) throw new Error('Invalid club number');
+
+    const currentSelection = selectedClubs.value;
+    const result = handleClubToggle(clubNumber, currentSelection, availableClubs.value);
+
+    if (!result.success) {
+      Logger.warn(`Club toggle blocked: ${result.reason}`);
+      error.value = result.reason;
+      return false;
+    }
+
+    const validation = validateClubSelection(result.newSelection);
+    if (!validation.valid) {
+      Logger.warn(`Club selection blocked: ${validation.reason}`);
+      error.value = validation.reason;
+      return false;
+    }
+
+    selectedClubs.value = result.newSelection;
+    error.value = null;
+    Logger.info(`Clubs: [${result.newSelection.map(c => c.id).join(', ')}] (${result.newSelection.length})`);
     return true;
   }),
 

@@ -41,6 +41,50 @@ export const SHAFT_LENGTHS = [
   '+2"',
 ];
 
+export const CONFIGURATOR_STEPS = [
+  { name: 'Club', active: true },
+  { name: 'Shaft', active: false },
+  { name: 'Grip', active: false },
+  { name: 'Review', active: false },
+];
+
+export const IRON_NUMBERS = ['4', '5', '6', '7', '8', '9', 'P'];
+
+// Club business rules
+export const REQUIRED_CLUBS = ['6', '7', '8', '9', 'PW'];
+export const OPTIONAL_CLUBS = ['4', '5'];
+export const CLUB_BUSINESS_RULES = {
+  // 4-iron requires 5-iron
+  dependencies: {
+    '4': ['5']
+  },
+  // Required clubs cannot be deselected
+  locked: REQUIRED_CLUBS.map(id => id === 'PW' ? 'P' : id)
+};
+
+export const GRIP_DATA = {
+  'Golf Pride': {
+    models: ['Tour Velvet', 'MCC', 'MCC Plus4'],
+    sizes: ['Standard', 'Midsize', 'Jumbo'],
+  },
+  Lamkin: {
+    models: ['Crossline', 'UTx', 'ST Soft'],
+    sizes: ['Standard', 'Midsize', 'Jumbo'],
+  },
+  Winn: {
+    models: ['DriTac', 'Excel', 'Grips Wrap'],
+    sizes: ['Standard', 'Midsize'],
+  },
+};
+
+export const SHAFT_LEAD_TIMES = {
+  KBS: '2-4 weeks',
+  Axiom: '1-2 weeks',
+  'LA Golf': '3-5 weeks',
+  'True Temper': '2-3 weeks',
+  Fujikura: '4-6 weeks',
+};
+
 export const DEFAULT_STATE_VALUES = {
   selectedHand: null,
   selectedClubs: [...DEFAULT_CLUBS],
