@@ -1,12 +1,14 @@
 /**
  * Modern State Persistence Utility
- * Handles localStorage with proper error handling, validation, and TypeScript support
+ * Handles sessionStorage with proper error handling, validation, and TypeScript support
+ * Clears state on page reload for better user experience
  */
 
 import { DEFAULT_STATE_VALUES } from '../constants/defaults.js';
 
 const STORAGE_KEY = 'golf-configurator-state';
 const STORAGE_VERSION = '1.0.0';
+const RELOAD_FLAG_KEY = 'golf-configurator-reload-flag';
 
 /**
  * State shape definition for validation and serialization
@@ -14,7 +16,7 @@ const STORAGE_VERSION = '1.0.0';
 const DEFAULT_STATE = {
   ...DEFAULT_STATE_VALUES,
   version: STORAGE_VERSION,
-  timestamp: Date.now()
+  timestamp: Date.now(),
 };
 
 /**
@@ -25,8 +27,14 @@ function validateState(state) {
 
   // Check required fields exist
   const requiredFields = [
-    'selectedHand', 'selectedClubs', 'selectedShafts', 'selectedGrip', 'selectedLie',
-    'selectedShaftBrand', 'selectedShaftFlex', 'selectedShaftLength'
+    'selectedHand',
+    'selectedClubs',
+    'selectedShafts',
+    'selectedGrip',
+    'selectedLie',
+    'selectedShaftBrand',
+    'selectedShaftFlex',
+    'selectedShaftLength',
   ];
   for (const field of requiredFields) {
     if (!(field in state)) return false;
@@ -42,17 +50,51 @@ function validateState(state) {
 }
 
 /**
- * Safe localStorage operations with error handling
+ * Sets up reload detection to clear state on page reload
+ */
+function setupReloadDetection() {
+  if (typeof window === 'undefined') return;
+
+  // Set flag when page is about to unload (reload/navigate away)
+  window.addEventListener('beforeunload', () => {
+    try {
+      sessionStorage.setItem(RELOAD_FLAG_KEY, 'true');
+    } catch (error) {
+      console.warn('⚠️ Could not set reload flag', error);
+    }
+  });
+}
+
+// Initialize reload detection
+setupReloadDetection();
+
+/**
+ * Safe sessionStorage operations with error handling
  */
 class PersistenceManager {
   /**
-   * Load state from localStorage with validation
+   * Load state from sessionStorage with validation
+   * Clears state on page reload for better user experience
    */
   static loadState() {
     try {
       if (typeof window === 'undefined') return DEFAULT_STATE;
 
-      const stored = localStorage.getItem(STORAGE_KEY);
+      // Check if this is a page reload
+      const isReload = sessionStorage.getItem(RELOAD_FLAG_KEY) === 'true';
+
+      // Clear the reload flag
+      sessionStorage.removeItem(RELOAD_FLAG_KEY);
+
+      // If it's a reload, return default state (clear persisted state)
+      if (isReload) {
+        console.log('🔄 PERSISTENCE: Page reload detected, clearing state');
+        // Clear the persisted state
+        sessionStorage.removeItem(STORAGE_KEY);
+        return DEFAULT_STATE;
+      }
+
+      const stored = sessionStorage.getItem(STORAGE_KEY);
       if (!stored) return DEFAULT_STATE;
 
       const parsed = JSON.parse(stored);
@@ -69,9 +111,8 @@ class PersistenceManager {
         return { ...DEFAULT_STATE, ...parsed, version: STORAGE_VERSION };
       }
 
-      console.log('✅ PERSISTENCE: State loaded from localStorage');
+      console.log('✅ PERSISTENCE: State loaded from sessionStorage');
       return parsed;
-
     } catch (error) {
       console.error('❌ PERSISTENCE: Failed to load state', error);
       return DEFAULT_STATE;
@@ -79,7 +120,7 @@ class PersistenceManager {
   }
 
   /**
-   * Save state to localStorage with error handling
+   * Save state to sessionStorage with error handling
    */
   static saveState(state) {
     try {
@@ -89,7 +130,7 @@ class PersistenceManager {
       const stateWithMeta = {
         ...state,
         version: STORAGE_VERSION,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // Validate before saving
@@ -98,9 +139,8 @@ class PersistenceManager {
         return false;
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithMeta));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithMeta));
       return true;
-
     } catch (error) {
       console.error('❌ PERSISTENCE: Failed to save state', error);
       return false;
@@ -113,7 +153,7 @@ class PersistenceManager {
   static clearState() {
     try {
       if (typeof window === 'undefined') return;
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
       console.log('🧹 PERSISTENCE: State cleared');
     } catch (error) {
       console.error('❌ PERSISTENCE: Failed to clear state', error);
@@ -127,14 +167,14 @@ class PersistenceManager {
     try {
       if (typeof window === 'undefined') return null;
 
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = sessionStorage.getItem(STORAGE_KEY);
       if (!stored) return null;
 
       const parsed = JSON.parse(stored);
       return {
         version: parsed.version,
         timestamp: parsed.timestamp,
-        age: Date.now() - (parsed.timestamp || 0)
+        age: Date.now() - (parsed.timestamp || 0),
       };
     } catch {
       return null;
