@@ -5,7 +5,7 @@
 
 import APP_CONFIG from '../config/app.js';
 import { Logger } from './persistence.js';
-import { CLUB_BUSINESS_RULES, AVAILABLE_CLUBS } from '../constants/defaults.js';
+import { CLUB_BUSINESS_RULES, AVAILABLE_CLUBS, SHAFT_LEAD_TIMES } from '../constants/defaults.js';
 
 // ================================
 // CLUB SELECTION VALIDATION
@@ -355,4 +355,19 @@ export function getMaxUnlockedStep(config) {
   }
 
   return maxStep;
+}
+
+/**
+ * Gets current lead time based on selected shaft brand
+ * @param {string} selectedShaftBrand - Currently selected shaft brand
+ * @returns {string} Lead time string (e.g. "2-4 weeks")
+ */
+export function getCurrentLeadTime(selectedShaftBrand) {
+  const defaultLeadTime = '2 weeks';
+
+  if (selectedShaftBrand && SHAFT_LEAD_TIMES[selectedShaftBrand]) {
+    return SHAFT_LEAD_TIMES[selectedShaftBrand];
+  }
+
+  return SHAFT_LEAD_TIMES['KBS'] || defaultLeadTime;
 }

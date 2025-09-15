@@ -20,10 +20,8 @@ import {
   error,
   isLoading,
 } from '../store/golfStore';
-import {
-  GRIP_DATA,
-  SHAFT_LEAD_TIMES,
-} from '../constants/defaults';
+import { GRIP_DATA } from '../constants/defaults';
+import { getCurrentLeadTime } from '../utils/validation';
 import * as productService from '../services/ProductService';
 import { cn } from '../lib/utils';
 
@@ -35,22 +33,6 @@ import { cn } from '../lib/utils';
  */
 export function GolfConfigurator() {
   const [currentStep, setCurrentStep] = useState(0);
-
-  // Get current lead time based on selected shafts
-  const getCurrentLeadTime = () => {
-    // Default lead time if no shafts selected
-    const defaultLeadTime = '2 weeks';
-
-    // Use selected shaft brand to determine lead time
-    if (selectedShaftBrand.value && SHAFT_LEAD_TIMES[selectedShaftBrand.value]) {
-      return SHAFT_LEAD_TIMES[selectedShaftBrand.value];
-    }
-
-    // For now, use KBS as the example since that's what's in the mockup
-    // This should eventually be determined by the actual selected shaft brand
-    // from the ShaftService data
-    return SHAFT_LEAD_TIMES['KBS'] || defaultLeadTime;
-  };
 
   // Simplified club toggle using store logic
   const toggleIron = (ironNumber) => {
@@ -115,11 +97,7 @@ export function GolfConfigurator() {
     <div className='min-h-screen bg-background p-3'>
       <div className='mx-auto max-w-md'>
         {/* Progress Steps */}
-        <StepIndicator
-          currentStep={currentStep}
-          maxUnlockedStep={maxUnlockedStep.value}
-          onStepClick={goToStep}
-        />
+        <StepIndicator currentStep={currentStep} maxUnlockedStep={maxUnlockedStep.value} onStepClick={goToStep} />
 
         {/* Active step indicator */}
         <div className='mb-6 h-1 bg-muted rounded'>
@@ -428,7 +406,7 @@ export function GolfConfigurator() {
 
         {/* Footer */}
         <div className='flex items-center justify-between text-muted-foreground'>
-          <span>Estimated lead time is {getCurrentLeadTime()}.</span>
+          <span>Estimated lead time is {getCurrentLeadTime(selectedShaftBrand.value)}.</span>
           <button onClick={reset} className='font-medium text-foreground underline hover:no-underline'>
             Reset
           </button>
