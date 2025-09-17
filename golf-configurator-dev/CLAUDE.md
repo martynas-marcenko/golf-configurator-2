@@ -34,21 +34,37 @@ src/
 │   ├── AVAILABLE_CLUBS           # All selectable clubs (4,5,6,7,8,9,PW)
 │   ├── DEFAULT_CLUBS             # Initially selected clubs (derived from AVAILABLE_CLUBS)
 │   ├── SHAFT_LENGTHS             # All length options (-2" to +2")
+│   ├── GRIP_DATA                 # Grip brands, models, and sizes
 │   └── DEFAULT_STATE_VALUES      # Complete initial state definition
 │
-├── hooks/useGolfState.js          # 🔧 SINGLE STATE SYSTEM
+├── store/golfStore.js             # 🔧 SINGLE STATE SYSTEM
 │   ├── Imports ALL constants from defaults.js
 │   ├── Reactive signals with Preact Signals
-│   ├── Computed values (ironSetType, canAddToCart)
-│   ├── Actions with error handling
+│   ├── Computed values (ironSetType, canAddToCart, maxUnlockedStep)
+│   ├── Actions with validation and error handling
 │   └── State persistence integration
 │
-├── utils/persistence.js           # 💾 CLEAN PERSISTENCE
-│   └── Uses DEFAULT_STATE_VALUES (no duplication)
+├── config/app.js                  # ⚙️ APPLICATION CONFIGURATION
+│   └── Environment, data sources, feature flags, business rules
+│
+├── utils/                         # 🛠️ UTILITIES
+│   ├── persistence.js            # State persistence and logging
+│   ├── validation.js             # Business logic validation
+│   └── dataAttributes.js         # Theme data attribute helpers
+│
+├── services/                      # 📡 DATA SERVICES
+│   ├── ProductService.js         # Iron set product fetching
+│   ├── ShaftService.js           # Shaft options from theme data
+│   └── CartService.js            # Cart integration with bundles
+│
+├── mocks/shopify-data.json        # 🧪 MOCK DATA
+│   └── Complete Shopify product simulation
 │
 └── components/                    # 🎨 CLEAN COMPONENTS
-    ├── GolfConfigurator.jsx      # Pure UI logic
-    └── ShaftPicker.jsx           # Imports SHAFT_LENGTHS from constants
+    ├── GolfConfigurator.jsx      # 4-step configurator flow
+    ├── ShaftPicker.jsx           # Shaft brand/flex/length selection
+    ├── ClubSelector.jsx          # Club selection with validation
+    └── StepIndicator.jsx         # Progress indicator
 ```
 
 ### DRY Implementation Examples
@@ -70,9 +86,11 @@ export const DEFAULT_CLUBS = AVAILABLE_CLUBS.filter(club =>
 
 #### ✅ State Management - Single System
 ```javascript
-// hooks/useGolfState.js - Import constants, export signals
-import { HAND_OPTIONS, AVAILABLE_CLUBS, SHAFT_LENGTHS } from '../constants/defaults.js';
+// store/golfStore.js - Import constants, export signals
+import { HAND_OPTIONS, AVAILABLE_CLUBS, DEFAULT_STATE_VALUES } from '../constants/defaults.js';
 
+export const selectedHand = signal(initialState.selectedHand);
+export const selectedClubs = signal([...initialState.selectedClubs]);
 export const handOptions = signal([...HAND_OPTIONS]);
 export const availableClubs = signal([...AVAILABLE_CLUBS]);
 // No hardcoded arrays anywhere
@@ -82,7 +100,7 @@ export const availableClubs = signal([...AVAILABLE_CLUBS]);
 ```javascript
 // components/ShaftPicker.jsx - Import what you need
 import { SHAFT_LENGTHS } from '../constants/defaults';
-import { actions, selectedShaftBrand } from '../hooks/useGolfState';
+import { actions, selectedShaftBrand, selectedShaftLength } from '../store/golfStore';
 
 // Use constants directly, no hardcoded data
 {SHAFT_LENGTHS.map((lengthOption) => ...)}
@@ -110,11 +128,13 @@ import { actions, selectedShaftBrand } from '../hooks/useGolfState';
 ```
 constants/defaults.js (Single Source)
         ↓
-hooks/useGolfState.js (Single State System)
+store/golfStore.js (Single State System)
         ↓
 components/ (Clean UI Components)
         ↓
-utils/persistence.js (Clean Storage)
+services/ (Data Layer)
+        ↓
+utils/ (Validation & Persistence)
 ```
 
 This architecture ensures **absolute DRY compliance** with zero duplication and maximum maintainability.
@@ -123,7 +143,7 @@ This architecture ensures **absolute DRY compliance** with zero duplication and 
 
 ## Modern React/Preact Best Practices
 
-> **⚠️ IMPORTANT**: The examples below are **general React/Preact patterns**. Our project uses the **DRY architecture documented above**. When there's a conflict, **always follow the DRY implementation** (constants from `defaults.js`, direct signals from `useGolfState.js`, no service classes, no custom hooks for state).
+> **⚠️ IMPORTANT**: The examples below are **general React/Preact patterns**. Our project uses the **DRY architecture documented above**. When there's a conflict, **always follow the DRY implementation** (constants from `defaults.js`, direct signals from `store/golfStore.js`, functional services, app config for environment detection).
 
 ### Component Architecture
 
@@ -206,7 +226,7 @@ function DataFetcher({ children, url }) {
 
 ### State Management with Signals
 
-> **⚠️ OUR PROJECT**: We use the single `useGolfState.js` file with constants from `defaults.js`. No hardcoded arrays or multiple state systems.
+> **⚠️ OUR PROJECT**: We use the single `store/golfStore.js` file with constants from `defaults.js`. No hardcoded arrays or multiple state systems.
 
 #### 1. Global State with Signals
 
@@ -256,7 +276,7 @@ export const actions = {
 
 ### Service Layer Architecture
 
-> **⚠️ OUR PROJECT**: We use function-based services (`services/ProductService.js`, `services/ShaftService.js`) with direct imports, not classes or service objects. Follow the DRY pattern above.
+> **⚠️ OUR PROJECT**: We use function-based services (`services/ProductService.js`, `services/ShaftService.js`, `services/CartService.js`) with environment detection via `APP_CONFIG.DATA.useRealData`. Follow the DRY pattern above.
 
 #### 1. Service Classes/Modules
 
@@ -644,18 +664,18 @@ return (
 
 ## Shopify Integration Patterns
 
-> **⚠️ OUR PROJECT**: We use function-based services with `USE_REAL_DATA` from `useGolfState.js`. No service classes or factories. Follow the DRY architecture documented above.
+> **⚠️ OUR PROJECT**: We use function-based services with `APP_CONFIG.DATA.useRealData` flag for environment detection. No service classes or factories. Follow the DRY architecture documented above.
 
 ### 1. Environment Detection
 
 ```javascript
 //  Clean environment switching
-const isDevelopment = import.meta.env.DEV;
-export const USE_REAL_DATA = !isDevelopment;
+import APP_CONFIG from '../config/app.js';
+const USE_REAL_DATA = APP_CONFIG.DATA.useRealData;
 
 //  Service factory pattern
-export const createProductService = () => {
-  return isDevelopment ? new MockProductService() : new ProductService();
+export const fetchClubHeadProducts = async () => {
+  return USE_REAL_DATA ? await fetchRealClubProducts() : await fetchMockClubProducts();
 };
 ```
 

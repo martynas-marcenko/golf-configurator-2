@@ -70,37 +70,44 @@ cd golf-configurator && npm run dev
 
 ### State Management
 - **System**: Preact Signals for reactive state management
-- **Location**: `golf-configurator-dev/src/hooks/useGolfState.js`
+- **Location**: `golf-configurator-dev/src/store/golfStore.js`
 - **Pattern**: Global signals with computed values and actions
-- **Key Signals**: 
-  - `selectedHand`, `selectedClubs`, `selectedShafts`
-  - `isLoading`, `error`, `totalPrice`, `canAddToCart`
+- **Key Signals**:
+  - `selectedHand`, `selectedClubs`, `selectedShaftBrand`, `selectedShaftFlex`, `selectedShaftLength`
+  - `selectedGrip`, `selectedLie`, `isLoading`, `error`, `canAddToCart`, `ironSetType`
 
 ### Service Layer Pattern
 The app uses a **dual-service architecture** that automatically switches between mock and real data:
 
 ```javascript
-// Automatic environment detection
-const isDevelopment = import.meta.env.DEV;
-export const productService = isDevelopment ? new MockProductService() : new ProductService();
-export const shaftService = isDevelopment ? new MockShaftService() : new ShaftService();
+// Automatic environment detection via app config
+import APP_CONFIG from '../config/app.js';
+const USE_REAL_DATA = APP_CONFIG.DATA.useRealData;
+
+// Function-based services (not classes)
+export const fetchClubHeadProducts = async () => {
+  return USE_REAL_DATA ? await fetchRealClubProducts() : await fetchMockClubProducts();
+};
 ```
 
 **Services Location**: `golf-configurator-dev/src/services/`
-- `ProductService.js` / `MockProductService.js` - Iron set variants and pricing
-- `ShaftService.js` / `MockShaftService.js` - Shaft options and variants
-- **Mock Data**: `golf-configurator-dev/src/mocks/mockShopifyData.js`
+- `ProductService.js` - Iron set variants and pricing (functional approach)
+- `ShaftService.js` - Shaft options loading from theme data attributes
+- `CartService.js` - Cart integration with bundle logic
+- **Mock Data**: `golf-configurator-dev/src/mocks/shopify-data.json`
+- **Configuration**: `golf-configurator-dev/src/config/app.js`
 
 ### Component Architecture
 - **UI Framework**: shadcn/ui components (`golf-configurator-dev/src/components/ui/`)
-- **Main Components**: `GolfConfigurator.jsx`, `ClubGrid.jsx`, `ShaftPicker.jsx`, `CartSummary.jsx`
-- **Pattern**: Functional components with signal subscriptions
+- **Main Components**: `GolfConfigurator.jsx`, `ShaftPicker.jsx`, `ClubSelector.jsx`, `StepIndicator.jsx`
+- **Pattern**: Functional components with direct signal access from store
 - **Styling**: Tailwind CSS with CSS variables for theming
+- **4-Step Flow**: Club Selection → Shaft Selection → Grip Selection → Review & Add to Cart
 
 ### Build System
 - **Dev Build**: Vite with HMR for fast development
 - **Production Build**: Optimized bundles output to Shopify extension assets
-- **Output Location**: `golf-configurator/extensions/golf-builder-configurator/assets/`
+- **Output Location**: `golf-configurator/extensions/golf-configurator-theme-app-extention/assets/`
 - **Bundle Names**: `golf-configurator.bundle.js`, `golf-configurator.bundle.css`
 
 ### Cart Integration
@@ -112,27 +119,31 @@ export const shaftService = isDevelopment ? new MockShaftService() : new ShaftSe
 ## Key Configuration Files
 
 - `golf-configurator-dev/vite.config.js` - Build configuration, proxy settings
-- `golf-configurator-dev/tailwind.config.js` - Tailwind CSS configuration  
+- `golf-configurator-dev/tailwind.config.js` - Tailwind CSS configuration
+- `golf-configurator-dev/src/config/app.js` - Application configuration and feature flags
+- `golf-configurator-dev/src/constants/defaults.js` - Single source of truth for all constants
 - `golf-configurator/shopify.app.toml` - Shopify app configuration
 - `golf-configurator/extensions/cart-transformer/shopify.extension.toml` - Cart function config
 
 ## Development Best Practices
 
 ### Working with State
-- Use signals directly: `selectedHand.value = 'right'`
-- Access computed values: `totalPrice.value` 
+- Import from store: `import { selectedHand, actions } from '../store/golfStore'`
+- Use signals directly: `selectedHand.value = 'Right Handed'`
+- Access computed values: `ironSetType.value`, `canAddToCart.value`
 - Subscribe in components: `selectedHand.value` (auto-rerenders)
-- Actions through: `actions.setHand()`, `actions.toggleClub()`, `actions.addToCart()`
+- Actions through: `actions.setHand()`, `actions.toggleClubByNumber()`, `actions.addToCart()`
 
 ### Environment Detection
-- Check `import.meta.env.DEV` for development mode
-- Mock services automatically active in dev environment
-- Console logs prefixed with `🧪 Mock:` in development
+- Use `APP_CONFIG.ENV.isDevelopment` for environment checks
+- Data source controlled by `APP_CONFIG.DATA.useRealData` flag
+- Mock services automatically active when `useRealData` is false
+- Console logs prefixed with `🧪 MOCK:` in development
 
 ### Testing Different Data Scenarios
-- Modify `golf-configurator-dev/src/mocks/mockShopifyData.js` for different product configurations
-- Mock services simulate API delays and error conditions
-- Use browser dev tools to inspect `window.golfConfiguratorState`
+- Modify `golf-configurator-dev/src/mocks/shopify-data.json` for different product configurations
+- Mock services simulate API delays and error conditions via `APP_CONFIG.DATA.mockApiDelay`
+- Use browser dev tools to inspect `window.golfConfiguratorState` (when `APP_CONFIG.FEATURES.stateDebug` is enabled)
 
 ## Shopify Integration Details
 
@@ -162,7 +173,7 @@ export const shaftService = isDevelopment ? new MockShaftService() : new ShaftSe
 ### Extension Locations
 - Theme Extension: `golf-configurator/extensions/golf-configurator-theme-app-extention/`
 - Cart Transformer: `golf-configurator/extensions/cart-transformer/`
-- Built Assets: Auto-generated from `golf-configurator-dev/` build process
+- Built Assets: Auto-generated from `golf-configurator-dev/` build process to theme extension assets directory
 
 ## Additional Context Documentation
 
