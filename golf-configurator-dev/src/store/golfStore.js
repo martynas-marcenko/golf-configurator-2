@@ -4,17 +4,18 @@
  */
 
 import { signal, computed } from '@preact/signals';
-import { DEFAULT_STATE_VALUES, DEFAULT_CLUBS, HAND_OPTIONS, AVAILABLE_CLUBS } from '../constants/defaults.js';
+import { DEFAULT_STATE_VALUES, DEFAULT_CLUBS, AVAILABLE_CLUBS } from '../constants/defaults.js';
 import { PersistenceManager, Logger, setupStatePersistence } from '../utils/persistence.js';
 import {
   safeAction,
   validateClubSelection,
   applyClubSelectionRules,
   handleClubToggle,
-  getMaxUnlockedStep
+  getMaxUnlockedStep,
 } from '../utils/validation.js';
 import { addGolfConfigurationToCart } from '../services/CartService.js';
 import * as shaftService from '../services/ShaftService.js';
+import { getProductHandAndVariations } from '../utils/dataAttributes.js';
 import APP_CONFIG from '../config/app.js';
 
 // ================================
@@ -37,7 +38,6 @@ const initialState = getInitialState();
 // CORE STATE SIGNALS - Single Source of Truth
 // ================================
 
-export const selectedHand = signal(initialState.selectedHand);
 export const selectedClubs = signal([...initialState.selectedClubs]);
 export const selectedGrip = signal(initialState.selectedGrip);
 export const selectedLie = signal(initialState.selectedLie);
@@ -52,7 +52,6 @@ export const isLoading = signal(false);
 export const error = signal(null);
 
 // Static data - imported from single source
-export const handOptions = signal([...HAND_OPTIONS]);
 export const availableClubs = signal([...AVAILABLE_CLUBS]);
 
 // ================================
@@ -71,7 +70,6 @@ export const ironSetType = computed(() => {
 
 export const canAddToCart = computed(() => {
   return (
-    selectedHand.value &&
     selectedClubs.value.length >= APP_CONFIG.BUSINESS.minClubCount &&
     selectedGrip.value?.brand &&
     selectedGrip.value?.model &&
@@ -81,7 +79,6 @@ export const canAddToCart = computed(() => {
 
 export const maxUnlockedStep = computed(() => {
   return getMaxUnlockedStep({
-    selectedHand: selectedHand.value,
     selectedClubs: selectedClubs.value,
     selectedShaftBrand: selectedShaftBrand.value,
     selectedShaftFlex: selectedShaftFlex.value,
@@ -95,13 +92,7 @@ export const maxUnlockedStep = computed(() => {
 // ================================
 
 export const actions = {
-  setHand: safeAction('setHand', (hand) => {
-    if (!hand) throw new Error('Invalid hand selection');
-    Logger.info(`Hand: ${selectedHand.value || 'None'} → ${hand}`);
-    selectedHand.value = hand;
-    error.value = null;
-    return true;
-  }),
+  // Note: setHand action removed - hand is now determined by product metafields
 
   toggleClub: safeAction('toggleClub', (club) => {
     if (!club?.id) throw new Error('Invalid club object');
@@ -124,7 +115,7 @@ export const actions = {
 
     selectedClubs.value = result.newSelection;
     error.value = null;
-    Logger.info(`Clubs: [${result.newSelection.map(c => c.id).join(', ')}] (${result.newSelection.length})`);
+    Logger.info(`Clubs: [${result.newSelection.map((c) => c.id).join(', ')}] (${result.newSelection.length})`);
     return true;
   }),
 
@@ -150,7 +141,7 @@ export const actions = {
 
     selectedClubs.value = result.newSelection;
     error.value = null;
-    Logger.info(`Clubs: [${result.newSelection.map(c => c.id).join(', ')}] (${result.newSelection.length})`);
+    Logger.info(`Clubs: [${result.newSelection.map((c) => c.id).join(', ')}] (${result.newSelection.length})`);
     return true;
   }),
 
@@ -164,7 +155,7 @@ export const actions = {
 
     selectedClubs.value = [...clubs];
     error.value = null;
-    Logger.info(`Clubs: [${clubs.map(c => c.id).join(', ')}] (${clubs.length})`);
+    Logger.info(`Clubs: [${clubs.map((c) => c.id).join(', ')}] (${clubs.length})`);
     return true;
   }),
 
@@ -253,7 +244,7 @@ export const actions = {
   },
 
   reset: safeAction('reset', () => {
-    selectedHand.value = DEFAULT_STATE_VALUES.selectedHand;
+    // Note: selectedHand not reset - determined by product metafields
     selectedClubs.value = [...DEFAULT_CLUBS];
     selectedGrip.value = DEFAULT_STATE_VALUES.selectedGrip;
     selectedLie.value = APP_CONFIG.BUSINESS.defaultLie;
@@ -271,7 +262,7 @@ export const actions = {
 
 export function getCurrentState() {
   return {
-    selectedHand: selectedHand.value,
+    // Note: selectedHand not included - now determined by product metafields
     selectedClubs: selectedClubs.value,
     selectedGrip: selectedGrip.value,
     selectedLie: selectedLie.value,
@@ -281,14 +272,27 @@ export function getCurrentState() {
   };
 }
 
+/**
+ * Gets the current hand from product metafields
+ * @returns {string} Current hand ('Left Handed' or 'Right Handed')
+ */
+export function getCurrentHand() {
+  try {
+    const { currentHand } = getProductHandAndVariations();
+    return currentHand;
+  } catch (error) {
+    console.warn('Failed to get current hand from metafields:', error);
+    return 'Right Handed'; // Fallback to default
+  }
+}
+
 // ================================
 // INITIALIZATION
 // ================================
 
 if (typeof window !== 'undefined') {
-  // Setup state persistence
+  // Setup state persistence (selectedHand excluded - determined by product metafields)
   setupStatePersistence({
-    selectedHand,
     selectedClubs,
     selectedGrip,
     selectedLie,
@@ -299,8 +303,7 @@ if (typeof window !== 'undefined') {
 
   if (APP_CONFIG.FEATURES.stateDebug) {
     window.golfConfiguratorState = {
-      // Core state
-      selectedHand,
+      // Core state (selectedHand excluded - determined by product metafields)
       selectedClubs,
       selectedGrip,
       selectedLie,

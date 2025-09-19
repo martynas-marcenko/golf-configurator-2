@@ -4,9 +4,11 @@
  */
 
 import * as productService from './ProductService.js';
+import * as shaftService from './ShaftService.js';
 import { getParentVariantIdFromThemeSettings } from '../utils/dataAttributes.js';
 import { validateCompleteConfiguration } from '../utils/validation.js';
 import { Logger } from '../utils/persistence.js';
+import { getCurrentHand } from '../store/golfStore.js';
 import APP_CONFIG from '../config/app.js';
 
 // ================================
@@ -22,52 +24,77 @@ import APP_CONFIG from '../config/app.js';
  * @returns {Object} Cart item for iron set
  */
 function buildIronCartItem(config, bundleId, ironVariant, parentVariantId) {
+  const currentHand = getCurrentHand(); // Get hand from metafields instead of config
+
   return {
     id: ironVariant.id,
     quantity: 1,
     properties: {
       bundleId,
       parentVariantId,
-      hand: config.selectedHand,
+      hand: currentHand,
       setSize: config.ironSetType,
       clubList: JSON.stringify(config.selectedClubs.map(club => club.id)),
       ...(config.selectedGrip && {
         grip: `${config.selectedGrip.brand} ${config.selectedGrip.size}`,
       }),
       lie: config.selectedLie,
-      // Shaft info (if available from legacy selectedShafts)
-      ...(config.selectedShafts && Object.keys(config.selectedShafts).length > 0 && {
-        shaft_variant_id: Object.values(config.selectedShafts)[0],
-        shaftName: 'Selected Shaft',
+      // Note: Shaft info for reference only - actual shaft product added separately
+      ...(config.selectedShaftBrand && {
+        shaftBrand: config.selectedShaftBrand,
+        shaftFlex: config.selectedShaftFlex,
+        shaftLength: config.selectedShaftLength,
       }),
     },
   };
 }
 
 /**
- * Builds shaft cart item (if using legacy shaft selection)
+ * Builds shaft cart item for selected shaft product
  * @param {Object} config - Golf configuration
  * @param {string} bundleId - Unique bundle identifier
- * @returns {Object|null} Cart item for shaft or null if no shaft
+ * @returns {Promise<Object|null>} Cart item for shaft product or null if no shaft selected
  */
-function buildShaftCartItem(config, bundleId) {
-  if (!config.selectedShafts || Object.keys(config.selectedShafts).length === 0) {
+async function buildShaftCartItem(config, bundleId) {
+  // Check if shaft is properly configured
+  if (!config.selectedShaftBrand || !config.selectedShaftFlex) {
     return null;
   }
 
-  const shaftVariantId = Object.values(config.selectedShafts)[0];
-  const clubCount = config.selectedClubs.length;
+  try {
+    // Load shaft options for the selected brand
+    const shaftOptions = await shaftService.loadShaftOptions(config.selectedShaftBrand);
 
-  return {
-    id: shaftVariantId,
-    quantity: clubCount,
-    properties: {
-      bundleId,
-      componentType: 'shaft',
-      shaftBrand: 'Selected Shaft',
-      clubCount: clubCount.toString(),
-    },
-  };
+    // Find the variant that matches the selected flex
+    const matchingShaft = shaftOptions.find(option =>
+      option.title === config.selectedShaftFlex ||
+      option.option1 === config.selectedShaftFlex
+    );
+
+    if (!matchingShaft) {
+      Logger.error(`No shaft variant found for brand "${config.selectedShaftBrand}" with flex "${config.selectedShaftFlex}"`);
+      return null;
+    }
+
+    const clubCount = config.selectedClubs.length;
+
+    return {
+      id: matchingShaft.id,
+      quantity: clubCount,
+      properties: {
+        bundleId,
+        componentType: 'shaft',
+        shaftBrand: config.selectedShaftBrand,
+        shaftFlex: config.selectedShaftFlex,
+        shaftLength: config.selectedShaftLength,
+        clubCount: clubCount.toString(),
+        shaftTitle: matchingShaft.displayName || matchingShaft.title,
+      },
+    };
+  } catch (error) {
+    Logger.error('Failed to build shaft cart item', error);
+    return null;
+  }
 }
 
 // ================================
@@ -88,9 +115,10 @@ export async function addGolfConfigurationToCart(golfConfig) {
 
   try {
     // Find iron variant for selected configuration
+    const currentHand = getCurrentHand(); // Get hand from metafields
     const ironVariant = await productService.findVariantBySetSize(
       golfConfig.ironSetType,
-      golfConfig.selectedHand
+      currentHand
     );
 
     if (!ironVariant) {
@@ -113,8 +141,8 @@ export async function addGolfConfigurationToCart(golfConfig) {
     );
     cartItems.push(ironItem);
 
-    // Add shaft item if using legacy shaft system
-    const shaftItem = buildShaftCartItem(golfConfig, bundleId);
+    // Add shaft item as separate product
+    const shaftItem = await buildShaftCartItem(golfConfig, bundleId);
     if (shaftItem) {
       cartItems.push(shaftItem);
     }

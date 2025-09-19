@@ -143,3 +143,54 @@ export const getBundleParentProductHandle = () => {
     throw new Error('Invalid bundle parent product data format in theme settings - please check theme configuration');
   }
 };
+
+/**
+ * Gets product hand and variation products from metafields
+ * @returns {Object} Object containing currentHand and variationProducts
+ */
+export function getProductHandAndVariations() {
+  const configuratorElement = document.getElementById('golf-configurator');
+
+  if (!configuratorElement) {
+    throw new Error('Golf configurator element not found');
+  }
+
+  // Read from data attributes (passed from Liquid theme)
+  const currentHand = configuratorElement.getAttribute('data-variation-value') || 'Right Handed';
+  const variationProductsData = configuratorElement.getAttribute('data-variation-products');
+
+  let variationProducts = [];
+  if (variationProductsData) {
+    try {
+      variationProducts = JSON.parse(variationProductsData);
+    } catch (error) {
+      console.warn('Failed to parse variation products data:', error);
+      variationProducts = [];
+    }
+  }
+
+  console.log('🔍 Current hand from metafields:', currentHand);
+  console.log('🔍 Variation products:', variationProducts);
+
+  return {
+    currentHand,
+    variationProducts
+  };
+}
+
+/**
+ * Gets the URL for a specific hand variation
+ * @param {string} targetHand - Target hand ('Left Handed' or 'Right Handed')
+ * @param {Array} variationProducts - Array of variation products
+ * @returns {string} Product URL for the target hand
+ */
+export function getHandVariationUrl(targetHand, variationProducts) {
+  const targetProduct = variationProducts.find(product => {
+    // Match by product title containing hand preference
+    return targetHand === 'Left Handed'
+      ? product.title.includes('Left Handed')
+      : !product.title.includes('Left Handed');
+  });
+
+  return targetProduct ? `/products/${targetProduct.handle}` : '#';
+};

@@ -5,15 +5,14 @@ import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } fro
 import { ShaftPicker } from './ShaftPicker';
 import { StepIndicator } from './StepIndicator';
 import { ClubSelector } from './ClubSelector';
+import { HandNavigation } from './HandNavigation';
 import {
-  selectedHand,
   selectedClubs,
   selectedShaftBrand,
   selectedShaftFlex,
   selectedShaftLength,
   selectedGrip,
   selectedLie,
-  handOptions,
   canAddToCart,
   maxUnlockedStep,
   actions,
@@ -49,7 +48,7 @@ export function GolfConfigurator() {
   // Removed old goToNextStep - replaced with handleNext
 
   const handleNext = async () => {
-    if (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) {
+    if (currentStep === 0 && selectedClubs.value.length >= 5) {
       setCurrentStep(1);
     } else if (currentStep === 1) {
       // For now, allow progression from shaft step (ShaftPicker handles its own validation)
@@ -136,27 +135,9 @@ export function GolfConfigurator() {
         {/* Step Content */}
         {currentStep === 0 && (
           <div>
-            {/* Select Hand */}
-            <div className='mb-6'>
-              <h2 className='mb-3 text-base font-bold text-foreground'>Select Hand</h2>
-              <div className='grid grid-cols-2 gap-4'>
-                {handOptions.value.map((hand) => (
-                  <Button
-                    key={hand.id}
-                    variant={selectedHand.value === hand.id ? 'default' : 'outline'}
-                    className={cn(
-                      'h-12 text-base font-medium',
-                      selectedHand.value === hand.id
-                        ? 'bg-black text-white hover:bg-black/90'
-                        : 'bg-card text-card-foreground border-border hover:bg-muted hover:text-foreground'
-                    )}
-                    onClick={() => actions.setHand(hand.id)}
-                  >
-                    {hand.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            {/* Hand Navigation (links to different products) */}
+            <HandNavigation />
+
             <ClubSelector selectedClubs={selectedClubs.value} onClubToggle={toggleIron} />
             <div className='mb-6'>
               <h2 className='mb-3 text-base font-bold text-foreground'>Select Lie Adjustment</h2>
@@ -285,24 +266,6 @@ export function GolfConfigurator() {
             <h2 className='mb-4 text-base font-bold text-foreground'>Review Your Selection</h2>
 
             <div className='space-y-3'>
-              {/* Hand Selection */}
-              <div className='flex items-center justify-between p-4 bg-card rounded-lg border'>
-                <div>
-                  <span className='text-sm text-muted-foreground'>Hand</span>
-                  <p className='font-medium text-base'>
-                    {handOptions.value.find((h) => h.id === selectedHand.value)?.name || 'Not selected'}
-                  </p>
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setCurrentStep(0)}
-                  className='text-black border-black hover:bg-black hover:text-white'
-                >
-                  Edit
-                </Button>
-              </div>
-
               {/* Iron Selection */}
               <div className='flex items-center justify-between p-4 bg-card rounded-lg border'>
                 <div>
@@ -365,7 +328,7 @@ export function GolfConfigurator() {
         <Button
           className={cn(
             'mb-4 w-full h-12 text-base font-medium rounded-full transition-all duration-200',
-            (currentStep === 0 && selectedHand.value && selectedClubs.value.length >= 5) ||
+            (currentStep === 0 && selectedClubs.value.length >= 5) ||
               (currentStep === 1 && selectedShaftFlex.value && selectedShaftLength.value) ||
               (currentStep === 2 &&
                 selectedGrip.value?.brand &&
@@ -377,7 +340,7 @@ export function GolfConfigurator() {
           )}
           onClick={handleNext}
           disabled={
-            (currentStep === 0 && (!selectedHand.value || selectedClubs.value.length < 5)) ||
+            (currentStep === 0 && selectedClubs.value.length < 5) ||
             (currentStep === 1 && (!selectedShaftFlex.value || !selectedShaftLength.value)) ||
             (currentStep === 2 &&
               (!selectedGrip.value?.brand || !selectedGrip.value?.model || !selectedGrip.value?.size)) ||

@@ -17,13 +17,13 @@ import { CLUB_BUSINESS_RULES, AVAILABLE_CLUBS, SHAFT_LEAD_TIMES } from '../const
  * @returns {Object} Validation result { valid: boolean, reason?: string }
  */
 export function validateClubSelection(clubs) {
-  const clubIds = clubs.map(c => c.id);
+  const clubIds = clubs.map((c) => c.id);
 
   // Check minimum clubs
   if (clubs.length < APP_CONFIG.BUSINESS.minClubCount) {
     return {
       valid: false,
-      reason: `Minimum ${APP_CONFIG.BUSINESS.minClubCount} clubs required`
+      reason: `Minimum ${APP_CONFIG.BUSINESS.minClubCount} clubs required`,
     };
   }
 
@@ -31,7 +31,7 @@ export function validateClubSelection(clubs) {
   if (clubs.length > APP_CONFIG.BUSINESS.maxClubCount) {
     return {
       valid: false,
-      reason: `Maximum ${APP_CONFIG.BUSINESS.maxClubCount} clubs allowed`
+      reason: `Maximum ${APP_CONFIG.BUSINESS.maxClubCount} clubs allowed`,
     };
   }
 
@@ -40,7 +40,7 @@ export function validateClubSelection(clubs) {
     if (!clubIds.includes(requiredId)) {
       return {
         valid: false,
-        reason: `Required club ${requiredId} missing`
+        reason: `Required club ${requiredId} missing`,
       };
     }
   }
@@ -49,7 +49,7 @@ export function validateClubSelection(clubs) {
   if (clubIds.includes('4') && !clubIds.includes('5')) {
     return {
       valid: false,
-      reason: 'Selecting 4-iron requires 5-iron'
+      reason: 'Selecting 4-iron requires 5-iron',
     };
   }
 
@@ -118,19 +118,7 @@ export function validateGripConfiguration(grip) {
  * @returns {Object} Validation result
  */
 export function validateCompleteConfiguration(config) {
-  const {
-    selectedHand,
-    selectedClubs,
-    selectedShaftBrand,
-    selectedShaftFlex,
-    selectedShaftLength,
-    selectedGrip
-  } = config;
-
-  // Hand selection
-  if (!selectedHand) {
-    return { valid: false, reason: 'Hand selection required' };
-  }
+  const { selectedClubs, selectedShaftBrand, selectedShaftFlex, selectedShaftLength, selectedGrip } = config;
 
   // Club validation
   const clubValidation = validateClubSelection(selectedClubs);
@@ -139,11 +127,7 @@ export function validateCompleteConfiguration(config) {
   }
 
   // Shaft validation
-  const shaftValidation = validateShaftConfiguration(
-    selectedShaftBrand,
-    selectedShaftFlex,
-    selectedShaftLength
-  );
+  const shaftValidation = validateShaftConfiguration(selectedShaftBrand, selectedShaftFlex, selectedShaftLength);
   if (!shaftValidation.valid) {
     return shaftValidation;
   }
@@ -202,9 +186,7 @@ export function safeAction(actionName, actionFn) {
  * @returns {Object|undefined} Found club object
  */
 export function findClubByNumber(clubNumber, availableClubs = AVAILABLE_CLUBS) {
-  return availableClubs.find(
-    (c) => c.name.includes(clubNumber) || (clubNumber === 'P' && c.name.includes('PW'))
-  );
+  return availableClubs.find((c) => c.name.includes(clubNumber) || (clubNumber === 'P' && c.name.includes('PW')));
 }
 
 /**
@@ -241,10 +223,10 @@ export function applyClubSelectionRules(currentSelection, newClub, availableClub
   // Apply dependency rules
   const dependencies = CLUB_BUSINESS_RULES.dependencies[newClub.id];
   if (dependencies) {
-    dependencies.forEach(depId => {
-      const hasDepClub = newSelection.some(c => c.id === depId);
+    dependencies.forEach((depId) => {
+      const hasDepClub = newSelection.some((c) => c.id === depId);
       if (!hasDepClub) {
-        const depClub = availableClubs.find(c => c.id === depId);
+        const depClub = availableClubs.find((c) => c.id === depId);
         if (depClub) {
           newSelection.push(depClub);
           Logger.info(`Auto-added ${depId}-iron (required with ${newClub.id}-iron)`);
@@ -269,7 +251,7 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
     return {
       success: false,
       newSelection: currentSelection,
-      reason: `${clubNumber === 'P' ? 'PW' : clubNumber + '-iron'} is required and cannot be deselected`
+      reason: `${clubNumber === 'P' ? 'PW' : clubNumber + '-iron'} is required and cannot be deselected`,
     };
   }
 
@@ -278,7 +260,7 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
     return {
       success: false,
       newSelection: currentSelection,
-      reason: `Club ${clubNumber} not found`
+      reason: `Club ${clubNumber} not found`,
     };
   }
 
@@ -293,7 +275,7 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
       // Deselecting 4: only deselect 4
       return {
         success: true,
-        newSelection: currentSelection.filter(c => c.id !== club.id)
+        newSelection: currentSelection.filter((c) => c.id !== club.id),
       };
     }
   } else if (clubNumber === '5') {
@@ -301,13 +283,13 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
       // Selecting 5: just select 5
       return {
         success: true,
-        newSelection: [...currentSelection, club]
+        newSelection: [...currentSelection, club],
       };
     } else {
       // Deselecting 5: must also deselect 4 if it's selected
-      let newSelection = currentSelection.filter(c => c.id !== club.id);
+      let newSelection = currentSelection.filter((c) => c.id !== club.id);
       if (isClubSelected('4', currentSelection)) {
-        newSelection = newSelection.filter(c => c.id !== '4');
+        newSelection = newSelection.filter((c) => c.id !== '4');
         Logger.info('Auto-removed 4-iron (requires 5-iron)');
       }
       return { success: true, newSelection };
@@ -318,12 +300,12 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
   if (isCurrentlySelected) {
     return {
       success: true,
-      newSelection: currentSelection.filter(c => c.id !== club.id)
+      newSelection: currentSelection.filter((c) => c.id !== club.id),
     };
   } else {
     return {
       success: true,
-      newSelection: [...currentSelection, club]
+      newSelection: [...currentSelection, club],
     };
   }
 }
@@ -334,13 +316,13 @@ export function handleClubToggle(clubNumber, currentSelection, availableClubs = 
  * @returns {number} Maximum step index that can be accessed
  */
 export function getMaxUnlockedStep(config) {
-  const { selectedHand, selectedClubs, selectedShaftBrand, selectedShaftFlex, selectedShaftLength, selectedGrip } = config;
+  const { selectedClubs, selectedShaftBrand, selectedShaftFlex, selectedShaftLength, selectedGrip } = config;
 
   // Step 0 (Club): Always accessible
   let maxStep = 0;
 
-  // Step 1 (Shaft): Unlocked when hand + minimum clubs selected
-  if (selectedHand && selectedClubs.length >= APP_CONFIG.BUSINESS.minClubCount) {
+  // Step 1 (Shaft): Unlocked when minimum clubs selected (hand is from metafields)
+  if (selectedClubs.length >= APP_CONFIG.BUSINESS.minClubCount) {
     maxStep = 1;
   }
 

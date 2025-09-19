@@ -3,9 +3,10 @@
  * Single source of truth for default state values
  */
 
+// Hand options for navigation (not configuration - determines product links)
 export const HAND_OPTIONS = [
-  { id: 'Left Handed', name: 'Left Hand' },
   { id: 'Right Handed', name: 'Right Hand' },
+  { id: 'Left Handed', name: 'Left Hand' },
 ];
 
 export const AVAILABLE_CLUBS = [
@@ -56,10 +57,10 @@ export const OPTIONAL_CLUBS = ['4', '5'];
 export const CLUB_BUSINESS_RULES = {
   // 4-iron requires 5-iron
   dependencies: {
-    '4': ['5']
+    4: ['5'],
   },
   // Required clubs cannot be deselected
-  locked: REQUIRED_CLUBS.map(id => id === 'PW' ? 'P' : id)
+  locked: REQUIRED_CLUBS.map((id) => (id === 'PW' ? 'P' : id)),
 };
 
 export const GRIP_DATA = {
@@ -86,9 +87,7 @@ export const SHAFT_LEAD_TIMES = {
 };
 
 export const DEFAULT_STATE_VALUES = {
-  selectedHand: null,
   selectedClubs: [...DEFAULT_CLUBS],
-  selectedShafts: {},
   selectedGrip: null,
   selectedLie: 'Standard',
   selectedShaftBrand: '',

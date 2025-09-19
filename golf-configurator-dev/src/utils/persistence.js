@@ -27,9 +27,7 @@ function validateState(state) {
 
   // Check required fields exist
   const requiredFields = [
-    'selectedHand',
     'selectedClubs',
-    'selectedShafts',
     'selectedGrip',
     'selectedLie',
     'selectedShaftBrand',
@@ -43,8 +41,7 @@ function validateState(state) {
   // Validate selectedClubs is array
   if (!Array.isArray(state.selectedClubs)) return false;
 
-  // Validate selectedShafts is object
-  if (typeof state.selectedShafts !== 'object') return false;
+  // Note: selectedShafts removed - using individual shaft properties
 
   return true;
 }
@@ -239,7 +236,6 @@ export function setupStatePersistence(stateSignals) {
     clearTimeout(persistenceTimeout);
     persistenceTimeout = setTimeout(() => {
       const currentState = {
-        selectedHand: stateSignals.selectedHand.value,
         selectedClubs: stateSignals.selectedClubs.value,
         selectedGrip: stateSignals.selectedGrip.value,
         selectedLie: stateSignals.selectedLie.value,
@@ -254,8 +250,7 @@ export function setupStatePersistence(stateSignals) {
 
   // Setup effect to watch all state signals
   effect(() => {
-    // Access all signals to create dependencies
-    stateSignals.selectedHand.value;
+    // Access all signals to create dependencies (selectedHand excluded - now from metafields)
     stateSignals.selectedClubs.value;
     stateSignals.selectedGrip.value;
     stateSignals.selectedLie.value;
