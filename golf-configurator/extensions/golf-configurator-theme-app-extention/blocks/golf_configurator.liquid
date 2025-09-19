@@ -1,8 +1,10 @@
 <!-- Golf Configurator App Container -->
-<div 
+<div
   id="golf-configurator"
   data-bundle-parent-product='{{ block.settings.bundle_parent_product | json }}'
   data-shaft-products='{{ block.settings.shaft_products | json }}'
+  data-variation-value='{{ product.metafields.custom.variation_value.value }}'
+  data-variation-products='{{ product.metafields.custom.variation_products.value | json }}'
 >
   <!-- The Preact app will be mounted here -->
   <div
@@ -23,7 +25,16 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     // The golf configurator will auto-initialize when the bundle loads
-    console.log('🏌️ Golf Configurator block loaded');
+    console.log('🏌️ Golf Configurator block loaded - Version: {{ "now" | date: "%Y%m%d-%H%M%S" }}');
+
+    // Log metafield data for verification
+    const configuratorEl = document.getElementById('golf-configurator');
+    console.log('📋 Metafield Data Check:', {
+      element: configuratorEl,
+      variationValue: configuratorEl?.getAttribute('data-variation-value'),
+      variationProducts: configuratorEl?.getAttribute('data-variation-products'),
+      hasVariationData: !!(configuratorEl?.getAttribute('data-variation-value') && configuratorEl?.getAttribute('data-variation-products'))
+    });
   });
 </script>
 
