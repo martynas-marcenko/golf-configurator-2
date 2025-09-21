@@ -34,14 +34,18 @@ function buildIronCartItem(config, bundleId, ironVariant, parentVariantId) {
       parentVariantId,
       hand: currentHand,
       setSize: config.ironSetType,
-      clubList: JSON.stringify(config.selectedClubs.map(club => club.id)),
+      club_list: JSON.stringify(config.selectedClubs.map(club => club.id)), // Use underscore for cart transformer
+      // Bundle identification
+      _bundle_type: 'golf_configurator',
+      _bundle_component: 'iron_set',
+      _bundle_summary: `${config.ironSetType} Iron Set (${config.selectedClubs.length} clubs)`,
       ...(config.selectedGrip && {
         grip: `${config.selectedGrip.brand} ${config.selectedGrip.size}`,
       }),
       lie: config.selectedLie,
       // Note: Shaft info for reference only - actual shaft product added separately
       ...(config.selectedShaftBrand && {
-        shaftBrand: config.selectedShaftBrand,
+        shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
         shaftFlex: config.selectedShaftFlex,
         shaftLength: config.selectedShaftLength,
       }),
@@ -83,11 +87,16 @@ async function buildShaftCartItem(config, bundleId) {
       quantity: clubCount,
       properties: {
         bundleId,
-        componentType: 'shaft',
-        shaftBrand: config.selectedShaftBrand,
+        component_type: 'shaft', // Use underscore for cart transformer
+        // Bundle identification
+        _bundle_type: 'golf_configurator',
+        _bundle_component: 'shaft',
+        _bundle_summary: `${config.selectedShaftBrand} ${config.selectedShaftFlex} Shaft (${clubCount} clubs)`,
+        // Shaft details
+        shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
         shaftFlex: config.selectedShaftFlex,
         shaftLength: config.selectedShaftLength,
-        clubCount: clubCount.toString(),
+        club_count: clubCount.toString(), // Use underscore for cart transformer
         shaftTitle: matchingShaft.displayName || matchingShaft.title,
       },
     };

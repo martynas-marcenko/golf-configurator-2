@@ -5,8 +5,8 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
   type CartLineInput = (typeof input.cart.lines)[0];
   const groupedItems: Record<string, CartLineInput[]> = {};
 
-  // Real Product Merge logging - Version 4.2
-  console.log('=== Cart Transformer Started v4.2 (Dynamic Parent Variant + Configurable Bundle) ===');
+  // Enhanced Bundle Presentation - Version 4.3
+  console.log('=== Cart Transformer Started v4.3 (Enhanced Bundle Presentation + Component Breakdown) ===');
   console.log('Cart lines:', input.cart.lines.length);
   console.log('Timestamp:', new Date().toISOString());
 
@@ -70,26 +70,30 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     console.log('Hand:', hand);
     console.log('Club list:', clubList);
 
-    // Create descriptive title based on components
+    // Create clean bundle title for customer-facing display
     const clubCount = clubList ? JSON.parse(clubList).length : 0;
-    const componentCount = group.length;
 
     // Check for shaft component to include in title
     const shaftComponent = group.find((item) => item.componentType?.value === 'shaft');
-    const shaftInfo = shaftComponent?.shaftBrand?.value || firstItem.shaftName?.value;
+    const shaftInfo = (shaftComponent as any)?.shaftBrand?.value || (shaftComponent as any)?.shaftTitle?.value || (firstItem as any).shaftName?.value;
+    const shaftFlex = (shaftComponent as any)?.shaftFlex?.value;
 
-    let title = `${hand} Handed ${setSize} Iron Set`;
-    if (clubCount > 0) {
-      title += ` (${clubCount} clubs)`;
-    }
+    // Generate clean, professional bundle title
+    let title = `Custom Golf Iron Set - ${setSize}`;
+
     if (shaftInfo) {
-      title += ` with ${shaftInfo}`;
+      let shaftDisplay = shaftInfo;
+      if (shaftFlex && !shaftInfo.includes(shaftFlex)) {
+        shaftDisplay += ` ${shaftFlex}`;
+      }
+      title += ` with ${shaftDisplay}`;
     }
-    if (componentCount > 1) {
-      title += ` - ${componentCount} components`;
-    }
+
+    // Add club count as subtitle info (not in main title)
+    const subtitle = `${clubCount} clubs configured for ${hand.toLowerCase()} hand`;
 
     console.log('Bundle title:', title);
+    console.log('Bundle subtitle:', subtitle);
 
     const parentVariantId = firstItem.parentVariantId?.value;
 
@@ -105,6 +109,16 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     console.log('🎯 Using parent variant ID:', parentVariantId);
     console.log('🎯 Source: Theme Settings (via cart properties)');
 
+    // Create component breakdown for bundle description
+    const components = group.map((item) => {
+      const componentType = item.componentType?.value || 'main';
+      const bundleSummary = (item as any)._bundle_summary?.value;
+      return bundleSummary || `${componentType} component`;
+    });
+
+    const bundleDescription = `Complete golf set: ${components.join(' + ')}`;
+    console.log('Bundle description:', bundleDescription);
+
     return {
       linesMerge: {
         cartLines: group.map((line) => ({
@@ -113,12 +127,35 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
         })),
         title: title,
         parentVariantId: parentVariantId,
+        // Add bundle metadata for better presentation
+        attributes: [
+          {
+            key: '_bundle_type',
+            value: 'golf_configurator'
+          },
+          {
+            key: '_bundle_description',
+            value: bundleDescription
+          },
+          {
+            key: '_bundle_hand',
+            value: hand
+          },
+          {
+            key: '_bundle_clubs',
+            value: clubCount.toString()
+          },
+          {
+            key: '_bundle_set_size',
+            value: setSize
+          }
+        ]
       },
     };
   });
 
   console.log('Total operations:', operations.length);
-  console.log('=== Cart Transformer Complete v4.2 ===');
+  console.log('=== Cart Transformer Complete v4.3 ===');
 
   return {
     operations,

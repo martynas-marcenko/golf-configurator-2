@@ -160,17 +160,23 @@ export function getProductHandAndVariations() {
   const variationProductsData = configuratorElement.getAttribute('data-variation-products');
 
   let variationProducts = [];
-  if (variationProductsData) {
+  if (variationProductsData && variationProductsData !== 'null' && variationProductsData.trim() !== '') {
     try {
-      variationProducts = JSON.parse(variationProductsData);
+      const parsed = JSON.parse(variationProductsData);
+      // Ensure we have a valid array
+      variationProducts = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       console.warn('Failed to parse variation products data:', error);
       variationProducts = [];
     }
+  } else {
+    console.warn('No variation products data found or data is null');
   }
 
   console.log('🔍 Current hand from metafields:', currentHand);
   console.log('🔍 Variation products:', variationProducts);
+  console.log('🔍 Variation products type:', typeof variationProducts);
+  console.log('🔍 Variation products is array:', Array.isArray(variationProducts));
 
   return {
     currentHand,
@@ -185,6 +191,12 @@ export function getProductHandAndVariations() {
  * @returns {string} Product URL for the target hand
  */
 export function getHandVariationUrl(targetHand, variationProducts) {
+  // Handle null/undefined variationProducts
+  if (!variationProducts || !Array.isArray(variationProducts)) {
+    console.warn('No variation products available for hand navigation');
+    return '#';
+  }
+
   const targetProduct = variationProducts.find(product => {
     // Match by product title containing hand preference
     return targetHand === 'Left Handed'
