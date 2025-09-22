@@ -27,6 +27,9 @@ export type TypedCartLine = CartTransformRunInput['cart']['lines'][0] & {
   shaftBrand?: { value: string };
   shaftTitle?: { value: string };
   shaftFlex?: { value: string };
+  shaftLength?: { value: string };
+  grip?: { value: string };
+  lie?: { value: string };
   _bundle_summary?: { value: string };
 }
 

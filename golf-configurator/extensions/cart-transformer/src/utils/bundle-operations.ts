@@ -8,10 +8,8 @@ import type {
   TypedCartLine,
   BundleGroups,
   BundleMetadata,
-  BundleAttribute,
-  ComponentSummary
+  BundleAttribute
 } from '../types/bundle-types';
-import { validateClubList } from './validation';
 
 /**
  * Groups cart lines by bundle ID
@@ -73,57 +71,86 @@ export function generateBundleTitle(metadata: BundleMetadata, group: TypedCartLi
   return title;
 }
 
-/**
- * Creates component summaries for bundle description (internal function)
- */
-function createComponentSummaries(group: TypedCartLine[]): ComponentSummary[] {
-  return group.map((item) => {
-    const componentType = item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN;
-    const bundleSummary = item._bundle_summary?.value;
-
-    return {
-      type: componentType,
-      summary: bundleSummary || `${componentType} component`,
-    };
-  });
-}
 
 /**
- * Generates bundle description from component summaries (internal function)
- */
-function generateBundleDescription(summaries: ComponentSummary[]): string {
-  const components = summaries.map(s => s.summary).join(' + ');
-  return BUNDLE_CONFIG.BUNDLE_DESCRIPTION_TEMPLATE.replace('{components}', components);
-}
-
-/**
- * Creates bundle attributes for cart operation
+ * Creates customer-friendly bundle attributes for checkout display
  */
 export function createBundleAttributes(metadata: BundleMetadata, group: TypedCartLine[]): BundleAttribute[] {
-  const clubCount = validateClubList(metadata.clubList);
-  const summaries = createComponentSummaries(group);
-  const bundleDescription = generateBundleDescription(summaries);
+  const shaftComponent = group.find(item => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
+  const mainComponent = group.find(item => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.MAIN);
 
-  return [
+  const attributes: BundleAttribute[] = [
+    // Clean component breakdown for customer understanding
     {
-      key: BUNDLE_CONFIG.ATTRIBUTE_KEYS.BUNDLE_TYPE,
-      value: BUNDLE_CONFIG.BUNDLE_TYPE,
+      key: 'Components',
+      value: createComponentsDisplay(group, metadata),
     },
+
+    // Configuration details (only relevant ones)
     {
-      key: BUNDLE_CONFIG.ATTRIBUTE_KEYS.BUNDLE_DESCRIPTION,
-      value: bundleDescription,
-    },
-    {
-      key: BUNDLE_CONFIG.ATTRIBUTE_KEYS.BUNDLE_HAND,
+      key: 'Hand',
       value: metadata.hand,
     },
-    {
-      key: BUNDLE_CONFIG.ATTRIBUTE_KEYS.BUNDLE_CLUBS,
-      value: clubCount.toString(),
-    },
-    {
-      key: BUNDLE_CONFIG.ATTRIBUTE_KEYS.BUNDLE_SET_SIZE,
-      value: metadata.setSize,
-    },
   ];
+
+  // Add shaft length if available
+  const shaftLength = shaftComponent?.shaftLength?.value;
+  if (shaftLength && shaftLength !== 'Standard') {
+    attributes.push({
+      key: 'Length',
+      value: shaftLength,
+    });
+  }
+
+  // Add grip if available
+  const grip = mainComponent?.grip?.value;
+  if (grip) {
+    attributes.push({
+      key: 'Grip',
+      value: grip,
+    });
+  }
+
+  // Add lie if available
+  const lie = mainComponent?.lie?.value;
+  if (lie) {
+    attributes.push({
+      key: 'Lie',
+      value: lie,
+    });
+  }
+
+  return attributes;
+}
+
+/**
+ * Creates a clean display of bundle components for customer checkout
+ */
+function createComponentsDisplay(group: TypedCartLine[], metadata: BundleMetadata): string {
+  const components: string[] = [];
+
+  group.forEach(item => {
+    const componentType = item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN;
+
+    if (componentType === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT) {
+      // Shaft component: "5 × Fujikura Axiom Stiff Shafts"
+      const brand = item.shaftBrand?.value || 'Shaft';
+      const flex = item.shaftFlex?.value;
+      const count = item.quantity;
+
+      let shaftDisplay = `${count} × ${brand}`;
+      if (flex) {
+        shaftDisplay += ` ${flex}`;
+      }
+      shaftDisplay += ` Shaft${count > 1 ? 's' : ''}`;
+
+      components.push(shaftDisplay);
+    } else {
+      // Main component: "1 × Iron Set (6-PW)"
+      const setSize = metadata.setSize;
+      components.push(`1 × Iron Set (${setSize})`);
+    }
+  });
+
+  return components.join(' + ');
 }
