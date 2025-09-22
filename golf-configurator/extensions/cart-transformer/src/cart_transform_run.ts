@@ -49,11 +49,36 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       );
     });
 
-    // Get the first item to extract bundle info
+    // Debug: Analyze all items in the group
+    console.log('=== GROUP ANALYSIS ===');
+    group.forEach((item, index) => {
+      console.log(`Item ${index + 1}:`);
+      console.log(`  Component type: ${item.componentType?.value || 'undefined'}`);
+      console.log(`  Hand: ${item.hand?.value || 'undefined'}`);
+      console.log(`  SetSize: ${item.setSize?.value || 'undefined'}`);
+      console.log(`  ClubList: ${item.clubList?.value || 'undefined'}`);
+      console.log(`  ParentVariantId: ${item.parentVariantId?.value || 'undefined'}`);
+      console.log(`  BundleId: ${item.bundleId?.value || 'undefined'}`);
+    });
+
+    // Since all items now have bundle metadata, use the first item
     const firstItem = group[0];
-    const hand = firstItem.hand?.value || 'Right';
-    const setSize = firstItem.setSize?.value || '5PW';
-    const clubList = firstItem.clubList?.value || '';
+
+    console.log('=== SELECTED FIRST ITEM (ALL ITEMS HAVE METADATA) ===');
+    console.log('Available properties:', Object.keys(firstItem));
+    console.log('Selected item component type:', firstItem.componentType?.value || 'undefined');
+    console.log('Has metadata - Hand:', !!firstItem.hand?.value, 'SetSize:', !!firstItem.setSize?.value);
+
+    const hand = firstItem.hand?.value || 'Right Handed';
+    const setSize = firstItem.setSize?.value || '6-PW';
+    // Try both snake_case and camelCase for club list
+    const clubList = (firstItem as any).club_list?.value || firstItem.clubList?.value || '';
+
+    console.log('Raw property values:');
+    console.log('  hand:', firstItem.hand?.value);
+    console.log('  setSize:', firstItem.setSize?.value);
+    console.log('  club_list:', (firstItem as any).club_list?.value);
+    console.log('  clubList:', firstItem.clubList?.value);
 
     // Calculate total bundle price from all real products
     const totalPrice = group.reduce((sum, item) => {
@@ -75,7 +100,10 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
 
     // Check for shaft component to include in title
     const shaftComponent = group.find((item) => item.componentType?.value === 'shaft');
-    const shaftInfo = (shaftComponent as any)?.shaftBrand?.value || (shaftComponent as any)?.shaftTitle?.value || (firstItem as any).shaftName?.value;
+    const shaftInfo =
+      (shaftComponent as any)?.shaftBrand?.value ||
+      (shaftComponent as any)?.shaftTitle?.value ||
+      (firstItem as any).shaftName?.value;
     const shaftFlex = (shaftComponent as any)?.shaftFlex?.value;
 
     // Generate clean, professional bundle title
@@ -97,10 +125,13 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
 
     const parentVariantId = firstItem.parentVariantId?.value;
 
+    console.log('Raw parentVariantId property:', firstItem.parentVariantId?.value);
+
     if (!parentVariantId) {
       console.error(
         '❌ No parent variant ID found in cart properties - bundle parent product must be configured in theme settings'
       );
+      console.error('All available properties for debugging:', firstItem);
       throw new Error(
         'Parent variant ID missing from cart properties - please configure bundle parent product in theme editor'
       );
@@ -127,29 +158,28 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
         })),
         title: title,
         parentVariantId: parentVariantId,
-        // Add bundle metadata for better presentation
         attributes: [
           {
             key: '_bundle_type',
-            value: 'golf_configurator'
+            value: 'golf_configurator',
           },
           {
             key: '_bundle_description',
-            value: bundleDescription
+            value: bundleDescription,
           },
           {
             key: '_bundle_hand',
-            value: hand
+            value: hand,
           },
           {
             key: '_bundle_clubs',
-            value: clubCount.toString()
+            value: clubCount.toString(),
           },
           {
             key: '_bundle_set_size',
-            value: setSize
-          }
-        ]
+            value: setSize,
+          },
+        ],
       },
     };
   });

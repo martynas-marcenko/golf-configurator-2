@@ -7,8 +7,10 @@
 /**
  * Get parent variant ID from data attributes for cart transformer
  * Reads from data-bundle-parent-product attribute set by theme extension
+ * @param {string} setSize - Iron set size (e.g., "6-PW")
+ * @param {string} hand - Hand preference (e.g., "Right Handed")
  */
-export const getParentVariantIdFromThemeSettings = async () => {
+export const getParentVariantIdFromThemeSettings = async (setSize, hand) => {
   try {
     const configuratorElement = document.getElementById('golf-configurator');
 
@@ -48,12 +50,25 @@ export const getParentVariantIdFromThemeSettings = async () => {
         const productData = await response.json();
         console.log('📦 Fetched product data:', productData.title);
 
-        if (!productData?.variants?.[0]?.id) {
-          throw new Error(`No valid parent variant found in fetched product "${cleanedData}"`);
+        if (!productData?.variants?.length) {
+          throw new Error(`No variants found in fetched product "${cleanedData}"`);
         }
 
-        const parentVariantId = `gid://shopify/ProductVariant/${productData.variants[0].id}`;
-        console.log('🎯 Found parent variant ID from API:', parentVariantId);
+        // Find the variant that matches the current configuration (only by setSize since hand is in metafield)
+        const matchingVariant = productData.variants.find(variant =>
+          variant.option1 === setSize
+        );
+
+        if (!matchingVariant) {
+          console.warn(`⚠️ No variant found for ${setSize}, using first variant as fallback`);
+          const fallbackVariant = productData.variants[0];
+          const parentVariantId = `gid://shopify/ProductVariant/${fallbackVariant.id}`;
+          console.log('🎯 Using fallback parent variant ID:', parentVariantId);
+          return parentVariantId;
+        }
+
+        const parentVariantId = `gid://shopify/ProductVariant/${matchingVariant.id}`;
+        console.log('🎯 Found matching parent variant ID:', parentVariantId, `(${setSize}, hand from metafield: ${hand})`);
         return parentVariantId;
       } catch (fetchError) {
         throw new Error(`Failed to fetch bundle parent product: ${fetchError.message}`);

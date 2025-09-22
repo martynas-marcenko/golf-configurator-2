@@ -32,6 +32,7 @@ function buildIronCartItem(config, bundleId, ironVariant, parentVariantId) {
     properties: {
       bundleId,
       parentVariantId,
+      component_type: 'main', // Set componentType for consistency
       hand: currentHand,
       setSize: config.ironSetType,
       club_list: JSON.stringify(config.selectedClubs.map(club => club.id)), // Use underscore for cart transformer
@@ -59,7 +60,7 @@ function buildIronCartItem(config, bundleId, ironVariant, parentVariantId) {
  * @param {string} bundleId - Unique bundle identifier
  * @returns {Promise<Object|null>} Cart item for shaft product or null if no shaft selected
  */
-async function buildShaftCartItem(config, bundleId) {
+async function buildShaftCartItem(config, bundleId, parentVariantId) {
   // Check if shaft is properly configured
   if (!config.selectedShaftBrand || !config.selectedShaftFlex) {
     return null;
@@ -87,7 +88,11 @@ async function buildShaftCartItem(config, bundleId) {
       quantity: clubCount,
       properties: {
         bundleId,
+        parentVariantId, // Add bundle metadata for consistency
         component_type: 'shaft', // Use underscore for cart transformer
+        hand: getCurrentHand(), // Add bundle metadata for consistency
+        setSize: config.ironSetType, // Add bundle metadata for consistency
+        club_list: JSON.stringify(config.selectedClubs.map(club => club.id)), // Add bundle metadata for consistency
         // Bundle identification
         _bundle_type: 'golf_configurator',
         _bundle_component: 'shaft',
@@ -136,7 +141,10 @@ export async function addGolfConfigurationToCart(golfConfig) {
 
     // Generate unique bundle ID and get parent variant
     const bundleId = `golf-${Date.now()}`;
-    const parentVariantId = await getParentVariantIdFromThemeSettings();
+    const parentVariantId = await getParentVariantIdFromThemeSettings(
+      golfConfig.ironSetType,
+      currentHand
+    );
 
     // Build cart items
     const cartItems = [];
@@ -151,7 +159,7 @@ export async function addGolfConfigurationToCart(golfConfig) {
     cartItems.push(ironItem);
 
     // Add shaft item as separate product
-    const shaftItem = await buildShaftCartItem(golfConfig, bundleId);
+    const shaftItem = await buildShaftCartItem(golfConfig, bundleId, parentVariantId);
     if (shaftItem) {
       cartItems.push(shaftItem);
     }

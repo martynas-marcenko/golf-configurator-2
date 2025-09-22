@@ -94,10 +94,11 @@ export const findVariantBySetSize = async (setSize, hand) => {
     return null;
   }
 
-  console.log(`🔍 Looking for variant with option1="${setSize}", option2="${hand}"`);
+  console.log(`🔍 Looking for variant with option1="${setSize}" (hand "${hand}" from metafield)`);
 
   const variant = product.variants.find((variant) => {
-    const matches = variant.option1 === setSize && variant.option2 === hand;
+    // Only match by option1 (setSize) since hand comes from metafield now
+    const matches = variant.option1 === setSize;
 
     if (matches) {
       console.log(`✅ Found variant: ${variant.title} (ID: ${variant.id})`);
@@ -108,8 +109,8 @@ export const findVariantBySetSize = async (setSize, hand) => {
 
   if (!variant) {
     console.error(
-      `❌ No variant found for option1="${setSize}", option2="${hand}". Available variants:`,
-      product.variants.map((v) => `${v.option1} / ${v.option2}`)
+      `❌ No variant found for setSize="${setSize}" (hand "${hand}" from metafield). Available variants:`,
+      product.variants.map((v) => `${v.option1}`)
     );
     return null;
   }
