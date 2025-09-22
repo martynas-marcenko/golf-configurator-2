@@ -30,25 +30,25 @@ function buildIronCartItem(config, bundleId, ironVariant, parentVariantId) {
     id: ironVariant.id,
     quantity: 1,
     properties: {
-      bundleId,
-      parentVariantId,
-      component_type: 'main', // Set componentType for consistency
-      hand: currentHand,
-      setSize: config.ironSetType,
-      club_list: JSON.stringify(config.selectedClubs.map(club => club.id)), // Use underscore for cart transformer
+      _bundleId: bundleId,
+      _parentVariantId: parentVariantId,
+      _component_type: 'main', // Set componentType for consistency
+      _hand: currentHand,
+      _setSize: config.ironSetType,
+      _club_list: JSON.stringify(config.selectedClubs.map((club) => club.id)), // Use underscore for cart transformer
       // Bundle identification
       _bundle_type: 'golf_configurator',
       _bundle_component: 'iron_set',
       _bundle_summary: `${config.ironSetType} Iron Set (${config.selectedClubs.length} clubs)`,
       ...(config.selectedGrip && {
-        grip: `${config.selectedGrip.brand} ${config.selectedGrip.size}`,
+        _grip: `${config.selectedGrip.brand} ${config.selectedGrip.size}`,
       }),
-      lie: config.selectedLie,
+      _lie: config.selectedLie,
       // Note: Shaft info for reference only - actual shaft product added separately
       ...(config.selectedShaftBrand && {
-        shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
-        shaftFlex: config.selectedShaftFlex,
-        shaftLength: config.selectedShaftLength,
+        _shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
+        _shaftFlex: config.selectedShaftFlex,
+        _shaftLength: config.selectedShaftLength,
       }),
     },
   };
@@ -71,13 +71,14 @@ async function buildShaftCartItem(config, bundleId, parentVariantId) {
     const shaftOptions = await shaftService.loadShaftOptions(config.selectedShaftBrand);
 
     // Find the variant that matches the selected flex
-    const matchingShaft = shaftOptions.find(option =>
-      option.title === config.selectedShaftFlex ||
-      option.option1 === config.selectedShaftFlex
+    const matchingShaft = shaftOptions.find(
+      (option) => option.title === config.selectedShaftFlex || option.option1 === config.selectedShaftFlex
     );
 
     if (!matchingShaft) {
-      Logger.error(`No shaft variant found for brand "${config.selectedShaftBrand}" with flex "${config.selectedShaftFlex}"`);
+      Logger.error(
+        `No shaft variant found for brand "${config.selectedShaftBrand}" with flex "${config.selectedShaftFlex}"`
+      );
       return null;
     }
 
@@ -87,22 +88,22 @@ async function buildShaftCartItem(config, bundleId, parentVariantId) {
       id: matchingShaft.id,
       quantity: clubCount,
       properties: {
-        bundleId,
-        parentVariantId, // Add bundle metadata for consistency
-        component_type: 'shaft', // Use underscore for cart transformer
-        hand: getCurrentHand(), // Add bundle metadata for consistency
-        setSize: config.ironSetType, // Add bundle metadata for consistency
-        club_list: JSON.stringify(config.selectedClubs.map(club => club.id)), // Add bundle metadata for consistency
+        _bundleId: bundleId,
+        _parentVariantId: parentVariantId, // Add bundle metadata for consistency
+        _component_type: 'shaft', // Use underscore for cart transformer
+        _hand: getCurrentHand(), // Add bundle metadata for consistency
+        _setSize: config.ironSetType, // Add bundle metadata for consistency
+        _club_list: JSON.stringify(config.selectedClubs.map((club) => club.id)), // Add bundle metadata for consistency
         // Bundle identification
         _bundle_type: 'golf_configurator',
         _bundle_component: 'shaft',
         _bundle_summary: `${config.selectedShaftBrand} ${config.selectedShaftFlex} Shaft (${clubCount} clubs)`,
         // Shaft details
-        shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
-        shaftFlex: config.selectedShaftFlex,
-        shaftLength: config.selectedShaftLength,
-        club_count: clubCount.toString(), // Use underscore for cart transformer
-        shaftTitle: matchingShaft.displayName || matchingShaft.title,
+        _shaft_brand: config.selectedShaftBrand, // Use underscore for cart transformer
+        _shaftFlex: config.selectedShaftFlex,
+        _shaftLength: config.selectedShaftLength,
+        _club_count: clubCount.toString(), // Use underscore for cart transformer
+        _shaftTitle: matchingShaft.displayName || matchingShaft.title,
       },
     };
   } catch (error) {
@@ -130,10 +131,7 @@ export async function addGolfConfigurationToCart(golfConfig) {
   try {
     // Find iron variant for selected configuration
     const currentHand = getCurrentHand(); // Get hand from metafields
-    const ironVariant = await productService.findVariantBySetSize(
-      golfConfig.ironSetType,
-      currentHand
-    );
+    const ironVariant = await productService.findVariantBySetSize(golfConfig.ironSetType, currentHand);
 
     if (!ironVariant) {
       throw new Error('Iron variant not found for selected configuration');
@@ -141,21 +139,13 @@ export async function addGolfConfigurationToCart(golfConfig) {
 
     // Generate unique bundle ID and get parent variant
     const bundleId = `golf-${Date.now()}`;
-    const parentVariantId = await getParentVariantIdFromThemeSettings(
-      golfConfig.ironSetType,
-      currentHand
-    );
+    const parentVariantId = await getParentVariantIdFromThemeSettings(golfConfig.ironSetType, currentHand);
 
     // Build cart items
     const cartItems = [];
 
     // Add iron set item
-    const ironItem = buildIronCartItem(
-      golfConfig,
-      bundleId,
-      ironVariant,
-      parentVariantId
-    );
+    const ironItem = buildIronCartItem(golfConfig, bundleId, ironVariant, parentVariantId);
     cartItems.push(ironItem);
 
     // Add shaft item as separate product
@@ -184,6 +174,9 @@ export async function addGolfConfigurationToCart(golfConfig) {
  * @returns {Promise<boolean>} Success status
  */
 async function addToShopifyCart(cartData) {
+  // Debug: Log the cart data being sent
+  console.log('🛒 CART DEBUG: Sending cart data to Shopify:', JSON.stringify(cartData, null, 2));
+
   const response = await fetch('/cart/add.js', {
     method: 'POST',
     headers: {
@@ -195,10 +188,12 @@ async function addToShopifyCart(cartData) {
 
   if (response.ok) {
     const result = await response.json();
+    console.log('🛒 CART DEBUG: Shopify cart response:', JSON.stringify(result, null, 2));
     Logger.info('Added to Shopify cart successfully', result);
     return true;
   } else {
     const errorData = await response.json();
+    console.log('🛒 CART DEBUG: Shopify cart error:', JSON.stringify(errorData, null, 2));
     const errorMessage = errorData.message || errorData.description || 'Failed to add to cart';
     throw new Error(errorMessage);
   }
@@ -211,7 +206,7 @@ async function addToShopifyCart(cartData) {
  */
 async function mockAddToCart(cartData) {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, APP_CONFIG.DATA.mockApiDelay));
+  await new Promise((resolve) => setTimeout(resolve, APP_CONFIG.DATA.mockApiDelay));
 
   Logger.info('🧪 Mock: Added to cart successfully', cartData);
   return true;

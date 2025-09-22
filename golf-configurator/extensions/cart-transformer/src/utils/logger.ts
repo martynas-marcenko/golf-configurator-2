@@ -49,7 +49,7 @@ export class Logger {
     if (bundleId) {
       console.log('Using group ID:', bundleId);
     } else {
-      console.log('Line has no bundleId, skipping transformation');
+      console.log('Line has no _bundleId, skipping transformation');
     }
   }
 
@@ -62,7 +62,9 @@ export class Logger {
       const componentType = item.componentType?.value || 'undefined';
       const merchandiseId = item.merchandise.__typename === 'ProductVariant' ? item.merchandise.id : 'N/A';
       console.log(
-        `  Component ${index + 1}: ${componentType} (${merchandiseId}) - ${item.cost.amountPerQuantity.amount} ${item.cost.amountPerQuantity.currencyCode}`
+        `  Component ${index + 1}: ${componentType} (${merchandiseId}) - ${item.cost.amountPerQuantity.amount} ${
+          item.cost.amountPerQuantity.currencyCode
+        }`
       );
     });
   }
@@ -72,11 +74,11 @@ export class Logger {
    */
   static metadataExtraction(item: TypedCartLine): void {
     console.log('=== METADATA EXTRACTION ===');
-    console.log('Available properties:', Object.keys(item));
+    console.log('Available attributes:', Object.keys(item));
     console.log('Component type:', item.componentType?.value || 'undefined');
     console.log('Hand:', item.hand?.value || 'undefined');
     console.log('SetSize:', item.setSize?.value || 'undefined');
-    console.log('ClubList:', item.clubList?.value || item.club_list?.value || 'undefined');
+    console.log('ClubList:', item.clubList?.value || 'undefined');
     console.log('ParentVariantId:', item.parentVariantId?.value || 'undefined');
     console.log('BundleId:', item.bundleId?.value || 'undefined');
   }
@@ -97,5 +99,4 @@ export class Logger {
     console.log('🎯 Using parent variant ID:', parentVariantId);
     console.log('🎯 Source: Theme Settings (via cart properties)');
   }
-
 }

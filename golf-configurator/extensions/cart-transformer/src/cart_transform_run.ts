@@ -42,11 +42,11 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     const totalPrice = calculateBundlePrice(group);
     const currency = firstItem.cost.amountPerQuantity.currencyCode;
     const title = generateBundleTitle(metadata, group);
-    const clubCount = JSON.parse(metadata.clubList).length;
+    const clubCount = JSON.parse(metadata._club_list).length;
 
     // Log results
     Logger.bundleResults(title, totalPrice, currency, clubCount);
-    Logger.parentVariant(metadata.parentVariantId);
+    Logger.parentVariant(metadata._parentVariantId);
 
     // Create bundle attributes
     const attributes = createBundleAttributes(metadata, group);
@@ -58,7 +58,7 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
           quantity: line.quantity,
         })),
         title,
-        parentVariantId: metadata.parentVariantId,
+        parentVariantId: metadata._parentVariantId,
         attributes,
       },
     };

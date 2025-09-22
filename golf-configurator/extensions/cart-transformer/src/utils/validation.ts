@@ -13,8 +13,17 @@ import type { TypedCartLine, BundleMetadata } from '../types/bundle-types';
 export function validateBundleMetadata(item: TypedCartLine): void {
   const missing: string[] = [];
 
+  // Map property names to attribute accessors
+  const attributeMap: Record<string, any> = {
+    _bundleId: item.bundleId?.value,
+    _hand: item.hand?.value,
+    _setSize: item.setSize?.value,
+    _parentVariantId: item.parentVariantId?.value,
+    _component_type: item.componentType?.value,
+  };
+
   for (const property of BUNDLE_CONFIG.REQUIRED_PROPERTIES) {
-    const value = (item as any)[property]?.value;
+    const value = attributeMap[property];
     if (!value) {
       missing.push(property);
     }
@@ -23,8 +32,8 @@ export function validateBundleMetadata(item: TypedCartLine): void {
   if (missing.length > 0) {
     throw new Error(
       `Missing required bundle metadata: ${missing.join(', ')}. ` +
-      `Item ID: ${item.id}. ` +
-      `All bundle items must have complete metadata from cart properties.`
+        `Item ID: ${item.id}. ` +
+        `All bundle items must have complete metadata from cart properties.`
     );
   }
 }
@@ -34,16 +43,16 @@ export function validateBundleMetadata(item: TypedCartLine): void {
  * Assumes validation has already passed
  */
 export function extractBundleMetadata(item: TypedCartLine): BundleMetadata {
-  // Get club list from either snake_case or camelCase property
-  const clubList = item.club_list?.value || item.clubList?.value || '';
+  // Get club list from attributes
+  const clubList = item.clubList?.value || '';
 
   return {
-    hand: item.hand!.value,
-    setSize: item.setSize!.value,
-    parentVariantId: item.parentVariantId!.value,
-    bundleId: item.bundleId!.value,
-    clubList,
-    componentType: item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN,
+    _hand: item.hand!.value,
+    _setSize: item.setSize!.value,
+    _parentVariantId: item.parentVariantId!.value,
+    _bundleId: item.bundleId!.value,
+    _club_list: clubList,
+    _component_type: item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN,
   };
 }
 

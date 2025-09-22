@@ -4,12 +4,7 @@
  */
 
 import { BUNDLE_CONFIG } from '../config/bundle-config';
-import type {
-  TypedCartLine,
-  BundleGroups,
-  BundleMetadata,
-  BundleAttribute
-} from '../types/bundle-types';
+import type { TypedCartLine, BundleGroups, BundleMetadata, BundleAttribute } from '../types/bundle-types';
 
 /**
  * Groups cart lines by bundle ID
@@ -46,16 +41,13 @@ export function calculateBundlePrice(group: TypedCartLine[]): number {
  */
 export function generateBundleTitle(metadata: BundleMetadata, group: TypedCartLine[]): string {
   // Find shaft component for title enhancement
-  const shaftComponent = group.find((item) =>
-    item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT
-  );
+  const shaftComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
 
-  const shaftInfo = shaftComponent?.shaftBrand?.value ||
-                   shaftComponent?.shaftTitle?.value;
+  const shaftInfo = shaftComponent?.shaftBrand?.value;
   const shaftFlex = shaftComponent?.shaftFlex?.value;
 
   // Generate base title
-  let title = BUNDLE_CONFIG.TITLE_TEMPLATES.BASE.replace('{setSize}', metadata.setSize);
+  let title = BUNDLE_CONFIG.TITLE_TEMPLATES.BASE.replace('{setSize}', metadata._setSize);
 
   // Add shaft information if available
   if (shaftInfo) {
@@ -63,21 +55,21 @@ export function generateBundleTitle(metadata: BundleMetadata, group: TypedCartLi
     if (shaftFlex && !shaftInfo.includes(shaftFlex)) {
       shaftDisplay += ` ${shaftFlex}`;
     }
-    title = BUNDLE_CONFIG.TITLE_TEMPLATES.WITH_SHAFT
-      .replace('{setSize}', metadata.setSize)
-      .replace('{shaft}', shaftDisplay);
+    title = BUNDLE_CONFIG.TITLE_TEMPLATES.WITH_SHAFT.replace('{setSize}', metadata._setSize).replace(
+      '{shaft}',
+      shaftDisplay
+    );
   }
 
   return title;
 }
 
-
 /**
  * Creates customer-friendly bundle attributes for checkout display
  */
 export function createBundleAttributes(metadata: BundleMetadata, group: TypedCartLine[]): BundleAttribute[] {
-  const shaftComponent = group.find(item => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
-  const mainComponent = group.find(item => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.MAIN);
+  const shaftComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
+  const mainComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.MAIN);
 
   const attributes: BundleAttribute[] = [
     // Clean component breakdown for customer understanding
@@ -89,7 +81,7 @@ export function createBundleAttributes(metadata: BundleMetadata, group: TypedCar
     // Configuration details (only relevant ones)
     {
       key: 'Hand',
-      value: metadata.hand,
+      value: metadata._hand,
     },
   ];
 
@@ -129,12 +121,12 @@ export function createBundleAttributes(metadata: BundleMetadata, group: TypedCar
 function createComponentsDisplay(group: TypedCartLine[], metadata: BundleMetadata): string {
   const components: string[] = [];
 
-  group.forEach(item => {
+  group.forEach((item) => {
     const componentType = item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN;
 
     if (componentType === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT) {
       // Shaft component: "5 × Fujikura Axiom Stiff Shafts"
-      const brand = item.shaftBrand?.value || 'Shaft';
+      const brand = item.shaftBrand?.value;
       const flex = item.shaftFlex?.value;
       const count = item.quantity;
 
@@ -147,7 +139,7 @@ function createComponentsDisplay(group: TypedCartLine[], metadata: BundleMetadat
       components.push(shaftDisplay);
     } else {
       // Main component: "1 × Iron Set (6-PW)"
-      const setSize = metadata.setSize;
+      const setSize = metadata._setSize;
       components.push(`1 × Iron Set (${setSize})`);
     }
   });

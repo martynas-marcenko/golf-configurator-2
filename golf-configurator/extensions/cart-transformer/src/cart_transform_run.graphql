@@ -20,40 +20,40 @@ query CartTransformRunInput {
           title
         }
       }
-      bundleId: attribute(key: "bundleId") {
+      bundleId: attribute(key: "_bundleId") {
         value
       }
-      parentVariantId: attribute(key: "parentVariantId") {
+      parentVariantId: attribute(key: "_parentVariantId") {
         value
       }
-      hand: attribute(key: "hand") {
+      hand: attribute(key: "_hand") {
         value
       }
-      setSize: attribute(key: "setSize") {
+      setSize: attribute(key: "_setSize") {
         value
       }
-      ironVariantId: attribute(key: "iron_variant_id") {
+      clubList: attribute(key: "_club_list") {
         value
       }
-      clubList: attribute(key: "club_list") {
+      componentType: attribute(key: "_component_type") {
         value
       }
-      headPrice: attribute(key: "head_price") {
+      shaftBrand: attribute(key: "_shaft_brand") {
         value
       }
-      shaftVariantId: attribute(key: "shaft_variant_id") {
+      shaftFlex: attribute(key: "_shaftFlex") {
         value
       }
-      shaftName: attribute(key: "shaft_name") {
+      shaftLength: attribute(key: "_shaftLength") {
         value
       }
-      componentType: attribute(key: "component_type") {
+      grip: attribute(key: "_grip") {
         value
       }
-      shaftBrand: attribute(key: "shaft_brand") {
+      lie: attribute(key: "_lie") {
         value
       }
-      clubCount: attribute(key: "club_count") {
+      clubCount: attribute(key: "_club_count") {
         value
       }
     }

@@ -31,10 +31,10 @@ export const BUNDLE_CONFIG = {
 
   // Required metadata properties for validation
   REQUIRED_PROPERTIES: [
-    'hand',
-    'setSize',
-    'parentVariantId',
-    'bundleId',
+    '_hand',
+    '_setSize',
+    '_parentVariantId',
+    '_bundleId',
   ] as const,
 
   // Bundle component summary template
