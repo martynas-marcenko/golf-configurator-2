@@ -223,35 +223,3 @@ async function mockAddToCart(cartData) {
 export function generateBundleId() {
   return `golf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
-
-/**
- * Formats cart item properties for display
- * @param {Object} properties - Cart item properties
- * @returns {Array} Formatted property entries
- */
-export function formatCartItemProperties(properties) {
-  const formatted = [];
-
-  if (properties.hand) {
-    formatted.push({ key: 'Hand', value: properties.hand });
-  }
-
-  if (properties.setSize) {
-    formatted.push({ key: 'Set Type', value: properties.setSize });
-  }
-
-  if (properties.clubList) {
-    const clubs = JSON.parse(properties.clubList);
-    formatted.push({ key: 'Clubs', value: clubs.join(', ') });
-  }
-
-  if (properties.grip) {
-    formatted.push({ key: 'Grip', value: properties.grip });
-  }
-
-  if (properties.lie) {
-    formatted.push({ key: 'Lie', value: properties.lie });
-  }
-
-  return formatted;
-}

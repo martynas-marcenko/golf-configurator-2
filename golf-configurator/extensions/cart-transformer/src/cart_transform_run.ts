@@ -48,7 +48,6 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     Logger.bundleResults(title, totalPrice, currency, clubCount);
     Logger.parentVariant(metadata._parentVariantId);
 
-    // Create bundle attributes
     const attributes = createBundleAttributes(metadata, group);
 
     return {
