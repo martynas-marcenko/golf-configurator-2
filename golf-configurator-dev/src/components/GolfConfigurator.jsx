@@ -93,7 +93,7 @@ export function GolfConfigurator() {
   }, []);
 
   return (
-    <div className='min-h-screen bg-background p-3'>
+    <div className='p-3'>
       <div className='mx-auto max-w-md'>
         {/* Progress Steps */}
         <StepIndicator currentStep={currentStep} maxUnlockedStep={maxUnlockedStep.value} onStepClick={goToStep} />
