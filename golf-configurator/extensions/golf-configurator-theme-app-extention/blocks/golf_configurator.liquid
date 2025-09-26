@@ -1,10 +1,29 @@
+<!-- Build programmatic hand links from variation products -->
+{% assign current_hand_raw = product.metafields.custom.variation_value.value %}
+{% assign current_hand_programmatic = current_hand_raw | downcase | replace: ' ', '-' %}
+
+{% assign right_hand_link = '' %}
+{% assign left_hand_link = '' %}
+
+{% for variation_product in product.metafields.custom.variation_products.value %}
+  {% assign full_product = all_products[variation_product.handle] %}
+  {% assign product_hand = full_product.metafields.custom.variation_value.value %}
+
+  {% if product_hand == 'Right Handed' %}
+    {% assign right_hand_link = '/products/' | append: variation_product.handle %}
+  {% elsif product_hand == 'Left Handed' %}
+    {% assign left_hand_link = '/products/' | append: variation_product.handle %}
+  {% endif %}
+{% endfor %}
+
 <!-- Golf Configurator App Container -->
 <div
   id="golf-configurator"
-  data-bundle-parent-product='{{ block.settings.bundle_parent_product | json }}'
-  data-shaft-products='{{ block.settings.shaft_products | json }}'
-  data-variation-value='{{ product.metafields.custom.variation_value.value }}'
-  data-variation-products='{{ product.metafields.custom.variation_products.value | json }}'
+  data-bundle-parent-product="{{ block.settings.bundle_parent_product | json }}"
+  data-shaft-products="{{ block.settings.shaft_products | json }}"
+  data-current-hand="{{ current_hand_programmatic }}"
+  data-right-hand-link="{{ right_hand_link }}"
+  data-left-hand-link="{{ left_hand_link }}"
 >
   <!-- The Preact app will be mounted here -->
   <div
@@ -29,11 +48,16 @@
 
     // Log metafield data for verification
     const configuratorEl = document.getElementById('golf-configurator');
-    console.log('📋 Metafield Data Check:', {
+    console.log('📋 Programmatic Hand Data Check:', {
       element: configuratorEl,
-      variationValue: configuratorEl?.getAttribute('data-variation-value'),
-      variationProducts: configuratorEl?.getAttribute('data-variation-products'),
-      hasVariationData: !!(configuratorEl?.getAttribute('data-variation-value') && configuratorEl?.getAttribute('data-variation-products'))
+      currentHand: configuratorEl?.getAttribute('data-current-hand'),
+      rightHandLink: configuratorEl?.getAttribute('data-right-hand-link'),
+      leftHandLink: configuratorEl?.getAttribute('data-left-hand-link'),
+      hasHandData: !!(
+        configuratorEl?.getAttribute('data-current-hand') &&
+        configuratorEl?.getAttribute('data-right-hand-link') &&
+        configuratorEl?.getAttribute('data-left-hand-link')
+      ),
     });
   });
 </script>
