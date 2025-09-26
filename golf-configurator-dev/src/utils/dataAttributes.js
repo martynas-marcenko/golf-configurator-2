@@ -160,75 +160,79 @@ export const getBundleParentProductHandle = () => {
 };
 
 /**
- * Gets product hand and variation products from metafields
- * @returns {Object} Object containing currentHand and variationProducts
+ * Gets product hand and hand links from programmatic data attributes
+ * @returns {Object} Object containing currentHand and handLinks
  */
 export function getProductHandAndVariations() {
   const configuratorElement = document.getElementById('golf-configurator');
 
   if (!configuratorElement) {
     console.error('❌ Golf configurator element not found - theme extension is not properly loaded');
-    return { error: 'Theme extension not loaded', currentHand: null, variationProducts: [] };
+    return { error: 'Theme extension not loaded', currentHand: null, handLinks: {} };
   }
 
-  // Read from data attributes (passed from Liquid theme)
-  const currentHand = configuratorElement.getAttribute('data-variation-value');
+  // Read programmatic data attributes from Liquid template
+  const currentHand = configuratorElement.getAttribute('data-current-hand');
+  const rightHandLink = configuratorElement.getAttribute('data-right-hand-link');
+  const leftHandLink = configuratorElement.getAttribute('data-left-hand-link');
+
   if (!currentHand) {
-    console.error('❌ data-variation-value attribute is missing - product metafields not configured');
-    return { error: 'Product metafields not configured (variation_value)', currentHand: null, variationProducts: [] };
+    console.error('❌ data-current-hand attribute is missing - product metafields not configured');
+    return { error: 'Product metafields not configured (current_hand)', currentHand: null, handLinks: {} };
   }
 
-  const variationProductsData = configuratorElement.getAttribute('data-variation-products');
-  let variationProducts = [];
-
-  if (!variationProductsData || variationProductsData === 'null' || variationProductsData.trim() === '') {
-    console.error('❌ data-variation-products attribute is missing or null - product metafields not configured');
-    return { error: 'Product metafields not configured (variation_products)', currentHand, variationProducts: [] };
+  if (!rightHandLink || !leftHandLink) {
+    console.error('❌ Hand link attributes missing - product metafields not configured', {
+      rightHandLink: !!rightHandLink,
+      leftHandLink: !!leftHandLink
+    });
+    return { error: 'Product metafields not configured (hand_links)', currentHand, handLinks: {} };
   }
 
-  try {
-    const parsed = JSON.parse(variationProductsData);
-    if (!Array.isArray(parsed)) {
-      console.error('❌ data-variation-products must be an array, got:', typeof parsed);
-      return { error: 'Invalid variation products data format', currentHand, variationProducts: [] };
-    }
-    variationProducts = parsed;
-  } catch (error) {
-    console.error('❌ Failed to parse variation products data:', error.message);
-    return { error: 'Failed to parse variation products data', currentHand, variationProducts: [] };
-  }
+  // Convert programmatic hand back to display format for compatibility
+  const displayCurrentHand = currentHand === 'right-handed' ? 'Right Handed' : 'Left Handed';
 
-  console.log('🔍 Current hand from metafields:', currentHand);
-  console.log('🔍 Variation products:', variationProducts);
-  console.log('🔍 Variation products type:', typeof variationProducts);
-  console.log('🔍 Variation products is array:', Array.isArray(variationProducts));
+  const handLinks = {
+    'right-handed': rightHandLink,
+    'left-handed': leftHandLink
+  };
+
+  console.log('🔍 Current hand (programmatic):', currentHand);
+  console.log('🔍 Current hand (display):', displayCurrentHand);
+  console.log('🔍 Hand links:', handLinks);
 
   return {
-    currentHand,
-    variationProducts,
+    currentHand: displayCurrentHand, // Return display format for compatibility
+    handLinks,
     error: null
   };
 }
 
 /**
- * Gets the URL for a specific hand variation
+ * Gets the URL for a specific hand variation using programmatic data attributes
  * @param {string} targetHand - Target hand ('Left Handed' or 'Right Handed')
- * @param {Array} variationProducts - Array of variation products
+ * @param {Object} handLinks - Hand links object from getProductHandAndVariations() (optional, will fetch if not provided)
  * @returns {string} Product URL for the target hand
  */
-export function getHandVariationUrl(targetHand, variationProducts) {
-  // Handle null/undefined variationProducts
-  if (!variationProducts || !Array.isArray(variationProducts)) {
-    console.warn('No variation products available for hand navigation');
-    return '#';
+export function getHandVariationUrl(targetHand, handLinks = null) {
+  // If handLinks not provided, fetch from data attributes
+  if (!handLinks) {
+    const { handLinks: fetchedLinks, error } = getProductHandAndVariations();
+    if (error || !fetchedLinks) {
+      console.warn('No hand links available for navigation:', error);
+      return '#';
+    }
+    handLinks = fetchedLinks;
   }
 
-  const targetProduct = variationProducts.find(product => {
-    // Match by product title containing hand preference
-    return targetHand === 'Left Handed'
-      ? product.title.includes('Left Handed')
-      : !product.title.includes('Left Handed');
-  });
+  // Convert display format to programmatic format
+  const programmaticHand = targetHand === 'Left Handed' ? 'left-handed' : 'right-handed';
 
-  return targetProduct ? `/products/${targetProduct.handle}` : '#';
+  const targetUrl = handLinks[programmaticHand];
+
+  console.log('🔍 Looking for target hand:', targetHand, '(', programmaticHand, ')');
+  console.log('🔍 Available hand links:', handLinks);
+  console.log('🎯 Target URL found:', targetUrl);
+
+  return targetUrl || '#';
 };

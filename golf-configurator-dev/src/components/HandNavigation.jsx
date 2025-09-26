@@ -10,19 +10,19 @@ import { cn } from '../lib/utils';
  */
 export function HandNavigation() {
   const [currentHand, setCurrentHand] = useState('Right Handed');
-  const [variationProducts, setVariationProducts] = useState([]);
+  const [handLinks, setHandLinks] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const { currentHand: hand, variationProducts: products } = getProductHandAndVariations();
+      const { currentHand: hand, handLinks: links } = getProductHandAndVariations();
       setCurrentHand(hand);
-      setVariationProducts(products);
+      setHandLinks(links);
     } catch (error) {
       console.error('Failed to load product hand data:', error);
       // Fallback to default state
       setCurrentHand('Right Handed');
-      setVariationProducts([]);
+      setHandLinks({});
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +46,7 @@ export function HandNavigation() {
       <div className='grid grid-cols-2 gap-4'>
         {HAND_OPTIONS.map((hand) => {
           const isCurrentHand = currentHand === hand.id;
-          const targetUrl = isCurrentHand ? '#' : getHandVariationUrl(hand.id, variationProducts);
+          const targetUrl = isCurrentHand ? '#' : getHandVariationUrl(hand.id, handLinks);
 
           return (
             <a
@@ -72,7 +72,7 @@ export function HandNavigation() {
       {import.meta.env.DEV && (
         <div className='mt-2 text-xs text-muted-foreground'>
           <div>Current: {currentHand}</div>
-          <div>Variations: {variationProducts.length} products found</div>
+          <div>Hand links: {Object.keys(handLinks).length} links found</div>
         </div>
       )}
     </div>
