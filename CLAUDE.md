@@ -137,13 +137,14 @@ export const fetchClubHeadProducts = async () => {
 ### Environment Detection
 - Use `APP_CONFIG.ENV.isDevelopment` for environment checks
 - Data source controlled by `APP_CONFIG.DATA.useRealData` flag
-- Mock services automatically active when `useRealData` is false
-- Console logs prefixed with `🧪 MOCK:` in development
+- **NO MOCK DATA**: Code must fail explicitly if real data is not available
+- **NO DEFAULTS**: All data attributes and elements must exist or the app will throw errors
 
-### Testing Different Data Scenarios
-- Modify `golf-configurator-dev/src/mocks/shopify-data.json` for different product configurations
-- Mock services simulate API delays and error conditions via `APP_CONFIG.DATA.mockApiDelay`
+### Data Requirements
+- **REAL DATA ONLY**: The app requires proper Shopify theme extension setup with data attributes
+- **NO FALLBACKS**: Missing elements or attributes will cause explicit errors
 - Use browser dev tools to inspect `window.golfConfiguratorState` (when `APP_CONFIG.FEATURES.stateDebug` is enabled)
+- All data must come from Shopify product metafields via theme extension
 
 ## Shopify Integration Details
 

@@ -167,25 +167,35 @@ export function getProductHandAndVariations() {
   const configuratorElement = document.getElementById('golf-configurator');
 
   if (!configuratorElement) {
-    throw new Error('Golf configurator element not found');
+    console.error('❌ Golf configurator element not found - theme extension is not properly loaded');
+    return { error: 'Theme extension not loaded', currentHand: null, variationProducts: [] };
   }
 
   // Read from data attributes (passed from Liquid theme)
-  const currentHand = configuratorElement.getAttribute('data-variation-value') || 'Right Handed';
-  const variationProductsData = configuratorElement.getAttribute('data-variation-products');
+  const currentHand = configuratorElement.getAttribute('data-variation-value');
+  if (!currentHand) {
+    console.error('❌ data-variation-value attribute is missing - product metafields not configured');
+    return { error: 'Product metafields not configured (variation_value)', currentHand: null, variationProducts: [] };
+  }
 
+  const variationProductsData = configuratorElement.getAttribute('data-variation-products');
   let variationProducts = [];
-  if (variationProductsData && variationProductsData !== 'null' && variationProductsData.trim() !== '') {
-    try {
-      const parsed = JSON.parse(variationProductsData);
-      // Ensure we have a valid array
-      variationProducts = Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      console.warn('Failed to parse variation products data:', error);
-      variationProducts = [];
+
+  if (!variationProductsData || variationProductsData === 'null' || variationProductsData.trim() === '') {
+    console.error('❌ data-variation-products attribute is missing or null - product metafields not configured');
+    return { error: 'Product metafields not configured (variation_products)', currentHand, variationProducts: [] };
+  }
+
+  try {
+    const parsed = JSON.parse(variationProductsData);
+    if (!Array.isArray(parsed)) {
+      console.error('❌ data-variation-products must be an array, got:', typeof parsed);
+      return { error: 'Invalid variation products data format', currentHand, variationProducts: [] };
     }
-  } else {
-    console.warn('No variation products data found or data is null');
+    variationProducts = parsed;
+  } catch (error) {
+    console.error('❌ Failed to parse variation products data:', error.message);
+    return { error: 'Failed to parse variation products data', currentHand, variationProducts: [] };
   }
 
   console.log('🔍 Current hand from metafields:', currentHand);
@@ -195,7 +205,8 @@ export function getProductHandAndVariations() {
 
   return {
     currentHand,
-    variationProducts
+    variationProducts,
+    error: null
   };
 }
 

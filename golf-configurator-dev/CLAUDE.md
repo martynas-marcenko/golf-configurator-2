@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code when working with this Preact/React development environment.
 
+## ⚠️ CRITICAL: NO MOCK DATA POLICY
+
+**IMPORTANT**: This project does NOT use mock data, defaults, or fallbacks:
+- All data must come from real Shopify theme extension data attributes
+- Missing elements or data will cause explicit errors (this is intentional)
+- No `try/catch` with fallback values - let errors surface to identify setup issues
+- The app requires proper Shopify theme extension configuration to function
+
 ## Project Architecture
 
 This is a **modern Preact application** with signals-based state management, shadcn/ui components, and Shopify integration:
@@ -10,7 +18,7 @@ This is a **modern Preact application** with signals-based state management, sha
 - **State Management**: Preact Signals for reactive state
 - **UI Library**: shadcn/ui components with Tailwind CSS
 - **Build Tool**: Vite with HMR
-- **Data Flow**: Services pattern with mock/real data switching
+- **Data Flow**: Services pattern with REAL DATA ONLY - no mocks or defaults
 
 ## DRY Architecture & Single Source of Truth
 
@@ -57,7 +65,7 @@ src/
 │   ├── ShaftService.js           # Shaft options from theme data
 │   └── CartService.js            # Cart integration with bundles
 │
-├── mocks/shopify-data.json        # 🧪 MOCK DATA
+├── mocks/shopify-data.json        # ❌ DEPRECATED - NO MOCK DATA USED
 │   └── Complete Shopify product simulation
 │
 └── components/                    # 🎨 CLEAN COMPONENTS
