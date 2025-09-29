@@ -39,29 +39,8 @@ export function calculateBundlePrice(group: TypedCartLine[]): number {
 /**
  * Generates bundle title based on components and configuration
  */
-export function generateBundleTitle(metadata: BundleMetadata, group: TypedCartLine[]): string {
-  // Find shaft component for title enhancement
-  const shaftComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
-
-  const shaftInfo = shaftComponent?.shaftBrand?.value;
-  const shaftFlex = shaftComponent?.shaftFlex?.value;
-
-  // Generate base title
-  let title = BUNDLE_CONFIG.TITLE_TEMPLATES.BASE.replace('{setSize}', metadata._setSize);
-
-  // Add shaft information if available
-  if (shaftInfo) {
-    let shaftDisplay = shaftInfo;
-    if (shaftFlex && !shaftInfo.includes(shaftFlex)) {
-      shaftDisplay += ` ${shaftFlex}`;
-    }
-    title = BUNDLE_CONFIG.TITLE_TEMPLATES.WITH_SHAFT.replace('{setSize}', metadata._setSize).replace(
-      '{shaft}',
-      shaftDisplay
-    );
-  }
-
-  return title;
+export function generateBundleTitle(_metadata: BundleMetadata, _group: TypedCartLine[]): string {
+  return 'Custom Set';
 }
 
 /**
@@ -71,30 +50,45 @@ export function createBundleAttributes(metadata: BundleMetadata, group: TypedCar
   const shaftComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT);
   const mainComponent = group.find((item) => item.componentType?.value === BUNDLE_CONFIG.COMPONENT_TYPES.MAIN);
 
-  const attributes: BundleAttribute[] = [
-    // Clean component breakdown for customer understanding
-    {
-      key: 'Components',
-      value: createComponentsDisplay(group, metadata),
-    },
+  const attributes: BundleAttribute[] = [];
 
-    // Configuration details (only relevant ones)
-    {
-      key: 'Hand',
-      value: metadata._hand,
-    },
-  ];
+  // 1. Set Option (e.g., "6-PW")
+  attributes.push({
+    key: 'Set Option',
+    value: metadata._setSize,
+  });
 
-  // Add shaft length if available
+  // 2. Lie Angle
+  const lie = mainComponent?.lie?.value;
+  if (lie) {
+    attributes.push({
+      key: 'Lie Angle',
+      value: lie,
+    });
+  }
+
+  // 3. Shaft (brand and flex combined)
+  const shaftBrand = shaftComponent?.shaftBrand?.value;
+  const shaftFlex = shaftComponent?.shaftFlex?.value;
+  if (shaftBrand) {
+    const shaftValue = shaftFlex && !shaftBrand.includes(shaftFlex) ? `${shaftBrand} ${shaftFlex}` : shaftBrand;
+
+    attributes.push({
+      key: 'Shaft',
+      value: shaftValue,
+    });
+  }
+
+  // 4. Length - only show if explicitly set (not Standard)
   const shaftLength = shaftComponent?.shaftLength?.value;
-  if (shaftLength && shaftLength !== 'Standard') {
+  if (shaftLength) {
     attributes.push({
       key: 'Length',
       value: shaftLength,
     });
   }
 
-  // Add grip if available
+  // 5. Grip
   const grip = mainComponent?.grip?.value;
   if (grip) {
     attributes.push({
@@ -103,46 +97,5 @@ export function createBundleAttributes(metadata: BundleMetadata, group: TypedCar
     });
   }
 
-  // Add lie if available
-  const lie = mainComponent?.lie?.value;
-  if (lie) {
-    attributes.push({
-      key: 'Lie',
-      value: lie,
-    });
-  }
-
   return attributes;
-}
-
-/**
- * Creates a clean display of bundle components for customer checkout
- */
-function createComponentsDisplay(group: TypedCartLine[], metadata: BundleMetadata): string {
-  const components: string[] = [];
-
-  group.forEach((item) => {
-    const componentType = item.componentType?.value || BUNDLE_CONFIG.COMPONENT_TYPES.MAIN;
-
-    if (componentType === BUNDLE_CONFIG.COMPONENT_TYPES.SHAFT) {
-      // Shaft component: "5 × Fujikura Axiom Stiff Shafts"
-      const brand = item.shaftBrand?.value;
-      const flex = item.shaftFlex?.value;
-      const count = item.quantity;
-
-      let shaftDisplay = `${count} × ${brand}`;
-      if (flex) {
-        shaftDisplay += ` ${flex}`;
-      }
-      shaftDisplay += ` Shaft${count > 1 ? 's' : ''}`;
-
-      components.push(shaftDisplay);
-    } else {
-      // Main component: "1 × Iron Set (6-PW)"
-      const setSize = metadata._setSize;
-      components.push(`1 × Iron Set (${setSize})`);
-    }
-  });
-
-  return components.join(' + ');
 }
