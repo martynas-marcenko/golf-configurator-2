@@ -5,7 +5,6 @@ import { SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItem } fro
 import { ShaftPicker } from './ShaftPicker';
 import { StepIndicator } from './StepIndicator';
 import { ClubSelector } from './ClubSelector';
-import { HandNavigation } from './HandNavigation';
 import {
   selectedClubs,
   selectedShaftBrand,
@@ -94,7 +93,7 @@ export function GolfConfigurator() {
 
   return (
     <div className='p-3'>
-      <div className='mx-auto max-w-md'>
+      <div className='mx-auto max-w-xl'>
         {/* Progress Steps */}
         <StepIndicator currentStep={currentStep} maxUnlockedStep={maxUnlockedStep.value} onStepClick={goToStep} />
 
@@ -135,9 +134,6 @@ export function GolfConfigurator() {
         {/* Step Content */}
         {currentStep === 0 && (
           <div>
-            {/* Hand Navigation (links to different products) */}
-            <HandNavigation />
-
             <ClubSelector selectedClubs={selectedClubs.value} onClubToggle={toggleIron} />
             <div className='mb-6'>
               <h2 className='mb-3 text-base font-bold text-foreground'>Select Lie Adjustment</h2>
@@ -368,7 +364,7 @@ export function GolfConfigurator() {
         </Button>
 
         {/* Footer */}
-        <div className='flex items-center justify-between text-muted-foreground'>
+        <div className='flex items-center justify-between'>
           <span>Estimated lead time is {getCurrentLeadTime(selectedShaftBrand.value)}.</span>
           <button onClick={reset} className='font-medium text-foreground underline hover:no-underline'>
             Reset
